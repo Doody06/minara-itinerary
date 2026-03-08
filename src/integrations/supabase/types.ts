@@ -14,7 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      hotels: {
+        Row: {
+          area: string | null
+          badges: string[] | null
+          confidence_score: number | null
+          created_at: string
+          description: string
+          destination: string
+          halal_status: string | null
+          id: string
+          name: string
+          price_range: string | null
+          star_rating: number | null
+          tags: string[] | null
+        }
+        Insert: {
+          area?: string | null
+          badges?: string[] | null
+          confidence_score?: number | null
+          created_at?: string
+          description: string
+          destination: string
+          halal_status?: string | null
+          id?: string
+          name: string
+          price_range?: string | null
+          star_rating?: number | null
+          tags?: string[] | null
+        }
+        Update: {
+          area?: string | null
+          badges?: string[] | null
+          confidence_score?: number | null
+          created_at?: string
+          description?: string
+          destination?: string
+          halal_status?: string | null
+          id?: string
+          name?: string
+          price_range?: string | null
+          star_rating?: number | null
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
+      places: {
+        Row: {
+          area: string | null
+          badges: string[] | null
+          confidence_score: number | null
+          cost_range: string | null
+          created_at: string
+          description: string
+          destination: string
+          halal_status: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          source_url: string | null
+          tags: string[] | null
+          type: string
+        }
+        Insert: {
+          area?: string | null
+          badges?: string[] | null
+          confidence_score?: number | null
+          cost_range?: string | null
+          created_at?: string
+          description: string
+          destination: string
+          halal_status?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          source_url?: string | null
+          tags?: string[] | null
+          type: string
+        }
+        Update: {
+          area?: string | null
+          badges?: string[] | null
+          confidence_score?: number | null
+          cost_range?: string | null
+          created_at?: string
+          description?: string
+          destination?: string
+          halal_status?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          source_url?: string | null
+          tags?: string[] | null
+          type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
