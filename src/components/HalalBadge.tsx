@@ -14,6 +14,7 @@ const badgeConfig: Record<BadgeType, { label: string; icon: React.ElementType; c
 
 export function HalalBadge({ badge }: { badge: BadgeType }) {
   const config = badgeConfig[badge];
+  if (!config) return null;
   const Icon = config.icon;
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${config.className}`}>
