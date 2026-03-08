@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useItinerary } from "@/lib/itineraryContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { destinations, travelerTypes, interests, halalPreferences, paceOptions } from "@/data/dummyData";
-import { ArrowLeft, ArrowRight, MapPin, Calendar, Users, Heart, Settings2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Calendar, Users, Heart, Settings2, Sparkles, Loader2 } from "lucide-react";
 
 const steps = [
   { title: "Destination", icon: MapPin },
@@ -20,6 +21,7 @@ const steps = [
 
 export default function PlanPage() {
   const navigate = useNavigate();
+  const { generateItinerary, isGenerating } = useItinerary();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     destination: "",
@@ -60,8 +62,21 @@ export default function PlanPage() {
     return true;
   };
 
-  const handleGenerate = () => {
-    navigate("/itinerary");
+  const handleGenerate = async () => {
+    const success = await generateItinerary({
+      destination: form.destination,
+      startDate: form.startDate,
+      endDate: form.endDate,
+      travelerType: form.travelerType,
+      budget: form.budget[0],
+      selectedInterests: form.selectedInterests,
+      selectedPreferences: form.selectedPreferences,
+      pace: form.pace,
+      specificNeeds: form.specificNeeds,
+    });
+    if (success) {
+      navigate("/itinerary");
+    }
   };
 
   return (
@@ -237,12 +252,44 @@ export default function PlanPage() {
                 Next <ArrowRight className="w-4 h-4" />
               </Button>
             ) : (
-              <Button onClick={handleGenerate} className="gap-2 bg-gold hover:bg-gold/90 text-navy font-semibold">
-                <Sparkles className="w-4 h-4" /> Generate Itinerary
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="gap-2 bg-gold hover:bg-gold/90 text-navy font-semibold"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" /> Generate Itinerary
+                  </>
+                )}
               </Button>
             )}
           </div>
         </div>
+
+        {/* Loading overlay */}
+        {isGenerating && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-card rounded-2xl border border-border p-8 max-w-md text-center shadow-xl">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+              </div>
+              <h3 className="text-xl font-display font-bold mb-2">Creating Your Itinerary</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                MINARA is searching our halal-verified database and crafting your personalized travel plan...
+              </p>
+              <div className="flex items-center justify-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
