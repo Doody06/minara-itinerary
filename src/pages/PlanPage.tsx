@@ -144,11 +144,13 @@ export default function PlanPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Outbound Date</Label>
-                  <Input type="date" value={form.startDate} onChange={(e) => updateForm("startDate", e.target.value)} className="h-12 mt-1" />
+                  <Input type="date" min={today} value={form.startDate} onChange={(e) => updateForm("startDate", e.target.value)} className="h-12 mt-1" />
+                  {dateErrors.startDate && <p className="text-destructive text-xs mt-1">{dateErrors.startDate}</p>}
                 </div>
                 <div>
                   <Label>Return Date</Label>
-                  <Input type="date" value={form.endDate} onChange={(e) => updateForm("endDate", e.target.value)} className="h-12 mt-1" />
+                  <Input type="date" min={form.startDate || today} value={form.endDate} onChange={(e) => updateForm("endDate", e.target.value)} className="h-12 mt-1" />
+                  {dateErrors.endDate && <p className="text-destructive text-xs mt-1">{dateErrors.endDate}</p>}
                 </div>
               </div>
               <div>
