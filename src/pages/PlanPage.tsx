@@ -55,9 +55,22 @@ export default function PlanPage() {
     }));
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
+  const dateErrors = {
+    startDate: form.startDate && form.startDate < today
+      ? "Outbound date cannot be before today."
+      : "",
+    endDate: form.endDate && form.startDate && form.endDate < form.startDate
+      ? "Return date cannot be before the outbound date."
+      : form.endDate && form.endDate < today
+        ? "Return date cannot be before today."
+        : "",
+  };
+
   const canNext = () => {
     if (step === 0) return !!form.destination;
-    if (step === 1) return !!form.startDate && !!form.endDate;
+    if (step === 1) return !!form.startDate && !!form.endDate && !dateErrors.startDate && !dateErrors.endDate;
     if (step === 2) return !!form.travelerType;
     return true;
   };
