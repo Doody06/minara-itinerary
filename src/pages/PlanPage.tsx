@@ -55,9 +55,22 @@ export default function PlanPage() {
     }));
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
+  const dateErrors = {
+    startDate: form.startDate && form.startDate < today
+      ? "Outbound date cannot be before today."
+      : "",
+    endDate: form.endDate && form.startDate && form.endDate < form.startDate
+      ? "Return date cannot be before the outbound date."
+      : form.endDate && form.endDate < today
+        ? "Return date cannot be before today."
+        : "",
+  };
+
   const canNext = () => {
     if (step === 0) return !!form.destination;
-    if (step === 1) return !!form.startDate && !!form.endDate;
+    if (step === 1) return !!form.startDate && !!form.endDate && !dateErrors.startDate && !dateErrors.endDate;
     if (step === 2) return !!form.travelerType;
     return true;
   };
@@ -131,11 +144,13 @@ export default function PlanPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Outbound Date</Label>
-                  <Input type="date" value={form.startDate} onChange={(e) => updateForm("startDate", e.target.value)} className="h-12 mt-1" />
+                  <Input type="date" min={today} value={form.startDate} onChange={(e) => updateForm("startDate", e.target.value)} className="h-12 mt-1" />
+                  {dateErrors.startDate && <p className="text-destructive text-xs mt-1">{dateErrors.startDate}</p>}
                 </div>
                 <div>
                   <Label>Return Date</Label>
-                  <Input type="date" value={form.endDate} onChange={(e) => updateForm("endDate", e.target.value)} className="h-12 mt-1" />
+                  <Input type="date" min={form.startDate || today} value={form.endDate} onChange={(e) => updateForm("endDate", e.target.value)} className="h-12 mt-1" />
+                  {dateErrors.endDate && <p className="text-destructive text-xs mt-1">{dateErrors.endDate}</p>}
                 </div>
               </div>
               <div>
