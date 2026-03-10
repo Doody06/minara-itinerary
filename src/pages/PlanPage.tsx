@@ -21,8 +21,21 @@ const steps = [
 
 export default function PlanPage() {
   const navigate = useNavigate();
-  const { generateItinerary, isGenerating } = useItinerary();
-  const [step, setStep] = useState(0);
+  const [searchParams] = useSearchParams();
+  const { generateItinerary, isGenerating, preferences: savedPrefs } = useItinerary();
+  const initialStep = Math.min(Number(searchParams.get("step") || 0), 4);
+  const [step, setStep] = useState(initialStep);
+  const [form, setForm] = useState({
+    destination: savedPrefs?.destination || "",
+    startDate: savedPrefs?.startDate || "",
+    endDate: savedPrefs?.endDate || "",
+    travelerType: savedPrefs?.travelerType || "",
+    budget: [savedPrefs?.budget || 2000],
+    selectedInterests: savedPrefs?.selectedInterests || ([] as string[]),
+    selectedPreferences: savedPrefs?.selectedPreferences || ([] as string[]),
+    pace: savedPrefs?.pace || "balanced",
+    specificNeeds: savedPrefs?.specificNeeds || "",
+  });
   const [form, setForm] = useState({
     destination: "",
     startDate: "",
