@@ -89,9 +89,9 @@ RULES:
 13. Each day needs a descriptive title mentioning the area/theme.
 14. CRITICAL: You MUST generate EXACTLY the number of days requested. If the user asks for a 20-day trip, you MUST return 20 day objects. Do NOT shorten or truncate. Every single day must be planned.`;
 
-    let userPrompt = `Create a ${days}-day itinerary for ${destination}.
+    let userPrompt = `Create a COMPLETE ${days}-day itinerary for ${destination}. You MUST generate exactly ${days} days (Day 1 through Day ${days}). Do not skip any days.
 
-Travel dates: ${startDate} to ${endDate}
+Travel dates: ${startDate} to ${endDate} (${days} days total)
 Traveler type: ${travelerType}
 Budget: $${budget}
 Interests: ${interests?.join(", ") || "General sightseeing"}
