@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useItinerary } from "@/lib/itineraryContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,18 +21,20 @@ const steps = [
 
 export default function PlanPage() {
   const navigate = useNavigate();
-  const { generateItinerary, isGenerating } = useItinerary();
-  const [step, setStep] = useState(0);
+  const [searchParams] = useSearchParams();
+  const { generateItinerary, isGenerating, preferences: savedPrefs } = useItinerary();
+  const initialStep = Math.min(Number(searchParams.get("step") || 0), 4);
+  const [step, setStep] = useState(initialStep);
   const [form, setForm] = useState({
-    destination: "",
-    startDate: "",
-    endDate: "",
-    travelerType: "",
-    budget: [2000],
-    selectedInterests: [] as string[],
-    selectedPreferences: [] as string[],
-    pace: "balanced",
-    specificNeeds: "",
+    destination: savedPrefs?.destination || "",
+    startDate: savedPrefs?.startDate || "",
+    endDate: savedPrefs?.endDate || "",
+    travelerType: savedPrefs?.travelerType || "",
+    budget: [savedPrefs?.budget || 2000],
+    selectedInterests: savedPrefs?.selectedInterests || ([] as string[]),
+    selectedPreferences: savedPrefs?.selectedPreferences || ([] as string[]),
+    pace: savedPrefs?.pace || "balanced",
+    specificNeeds: savedPrefs?.specificNeeds || "",
   });
 
   const updateForm = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
@@ -158,6 +160,21 @@ export default function PlanPage() {
                 <Slider value={form.budget} onValueChange={(v) => updateForm("budget", v)} min={100} max={10000} step={100} className="mt-3" />
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                   <span>$100</span><span>$10,000</span>
+                </div>
+                <div className="mt-3">
+                  <Label className="text-xs text-muted-foreground">Or enter amount</Label>
+                  <Input
+                    type="number"
+                    min={100}
+                    max={10000}
+                    value={form.budget[0]}
+                    onChange={(e) => {
+                      const val = Math.max(100, Math.min(10000, Number(e.target.value) || 100));
+                      updateForm("budget", [val]);
+                    }}
+                    className="h-10 mt-1 w-40"
+                    placeholder="$2,000"
+                  />
                 </div>
               </div>
             </div>

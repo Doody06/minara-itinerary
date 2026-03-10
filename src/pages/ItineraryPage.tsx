@@ -127,7 +127,7 @@ export default function ItineraryPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <Link to="/plan" className="text-sm text-primary hover:underline flex items-center gap-1 mb-2">
+            <Link to="/plan?step=4" className="text-sm text-primary hover:underline flex items-center gap-1 mb-2">
               <ArrowLeft className="w-4 h-4" /> Edit preferences
             </Link>
             <h1 className="text-3xl font-display font-bold">Your {destinationLabel} Itinerary</h1>
