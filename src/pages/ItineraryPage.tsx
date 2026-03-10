@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { HalalBadge, ConfidenceIndicator } from "@/components/HalalBadge";
+import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
 import { useItinerary } from "@/lib/itineraryContext";
 import type { ItineraryItem } from "@/data/dummyData";
 import {
@@ -22,12 +23,15 @@ const quickEdits = [
   "More Luxury", "Less Walking", "More Food-Focused",
 ];
 
-function ItemCard({ item }: { item: ItineraryItem }) {
+function ItemCard({ item, onSelect }: { item: ItineraryItem; onSelect: (item: ItineraryItem) => void }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = typeIcons[item.type] || Landmark;
 
   return (
-    <div className="bg-card rounded-xl border border-border p-4 hover:shadow-md transition-all group">
+    <div
+      className="bg-card rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer"
+      onClick={() => onSelect(item)}
+    >
       <div className="flex gap-4">
         <div className="flex flex-col items-center">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
@@ -43,19 +47,19 @@ function ItemCard({ item }: { item: ItineraryItem }) {
           <div className="flex items-start justify-between gap-2">
             <div>
               <span className="text-xs font-medium text-muted-foreground">{item.time}</span>
-              <h4 className="font-display font-semibold text-base">{item.title}</h4>
+              <h4 className="font-display font-semibold text-base group-hover:text-primary transition-colors">{item.title}</h4>
             </div>
             {item.cost && (
               <span className="text-sm font-medium text-gold shrink-0">{item.cost}</span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
           <div className="flex flex-wrap gap-1.5 mt-2">
             {item.badges.map((b) => <HalalBadge key={b} badge={b} />)}
           </div>
           {(item.confidenceScore || item.explanation) && (
             <button
-              onClick={() => setExpanded(!expanded)}
+              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
               className="flex items-center gap-1 text-xs text-primary mt-2 hover:underline"
             >
               <Info className="w-3 h-3" />
@@ -64,7 +68,7 @@ function ItemCard({ item }: { item: ItineraryItem }) {
             </button>
           )}
           {expanded && (
-            <div className="mt-2 p-3 bg-muted rounded-lg text-sm space-y-2 animate-fade-in">
+            <div className="mt-2 p-3 bg-muted rounded-lg text-sm space-y-2 animate-fade-in" onClick={(e) => e.stopPropagation()}>
               {item.confidenceScore && <ConfidenceIndicator score={item.confidenceScore} />}
               {item.explanation && <p className="text-muted-foreground">{item.explanation}</p>}
             </div>
@@ -79,6 +83,7 @@ export default function ItineraryPage() {
   const navigate = useNavigate();
   const { itinerary, hotel, isGenerating, quickAdjust, regenerate, preferences } = useItinerary();
   const [activeDay, setActiveDay] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
 
   // If no itinerary, redirect to plan
   if (!itinerary && !isGenerating) {
@@ -191,7 +196,7 @@ export default function ItineraryPage() {
 
               <div className="space-y-3">
                 {currentItinerary[activeDay]?.items.map((item) => (
-                  <ItemCard key={item.id} item={item} />
+                  <ItemCard key={item.id} item={item} onSelect={setSelectedItem} />
                 ))}
               </div>
             </div>
@@ -252,6 +257,13 @@ export default function ItineraryPage() {
           </div>
         )}
       </div>
+
+      {/* Place Detail Dialog */}
+      <PlaceDetailDialog
+        item={selectedItem}
+        open={!!selectedItem}
+        onOpenChange={(open) => { if (!open) setSelectedItem(null); }}
+      />
     </div>
   );
 }

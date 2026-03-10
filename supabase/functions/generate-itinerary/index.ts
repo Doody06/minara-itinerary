@@ -61,8 +61,9 @@ serve(async (req) => {
     // Calculate trip duration (inclusive of both start and end dates)
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-    console.log(`Trip duration: ${days} days (${startDate} to ${endDate})`);
+    const rawDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    const days = Math.min(rawDays, 15); // Cap at 15 days max
+    console.log(`Trip duration: ${rawDays} days (capped to ${days}) (${startDate} to ${endDate})`);
 
     // Build the system prompt
     const systemPrompt = `You are MINARA, an AI halal travel itinerary planner. You create detailed, day-by-day travel itineraries for Muslim travelers.

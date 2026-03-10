@@ -1,7 +1,22 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Shield, MapPin, Users, Utensils, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import heroImg from "@/assets/hero-istanbul.jpg";
+import heroIstanbul from "@/assets/hero-istanbul.jpg";
+import heroIstanbul2 from "@/assets/hero-istanbul-2.jpg";
+import heroKL from "@/assets/hero-kuala-lumpur.jpg";
+import heroDubai from "@/assets/hero-dubai.jpg";
+import heroMarrakech from "@/assets/hero-marrakech.jpg";
+import heroMaldives from "@/assets/hero-maldives.jpg";
+
+const heroImages = [
+  { src: heroIstanbul, alt: "Istanbul skyline at golden hour" },
+  { src: heroDubai, alt: "Dubai skyline with Burj Khalifa" },
+  { src: heroKL, alt: "Kuala Lumpur Petronas Towers at twilight" },
+  { src: heroMarrakech, alt: "Marrakech traditional architecture" },
+  { src: heroMaldives, alt: "Maldives tropical paradise" },
+  { src: heroIstanbul2, alt: "Blue Mosque and Hagia Sophia Istanbul" },
+];
 
 const features = [
   { icon: Utensils, title: "Halal Dining", desc: "Verified halal restaurants with confidence scores and trust badges." },
@@ -17,12 +32,30 @@ const stats = [
 ];
 
 export default function LandingPage() {
+  const [currentImage, setCurrentImage] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroImg} alt="Istanbul skyline at golden hour" className="w-full h-full object-cover" />
+          {heroImages.map((img, i) => (
+            <img
+              key={img.alt}
+              src={img.src}
+              alt={img.alt}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out ${
+                i === currentImage ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          ))}
           <div className="absolute inset-0 bg-gradient-to-b from-navy/70 via-navy/50 to-navy/80" />
         </div>
         <div className="relative z-10 text-center px-4 max-w-3xl mx-auto animate-fade-in-up">
@@ -41,6 +74,18 @@ export default function LandingPage() {
               Start Planning <ArrowRight className="w-5 h-5" />
             </Button>
           </Link>
+        </div>
+        {/* Image indicators */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+          {heroImages.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentImage(i)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                i === currentImage ? "bg-gold w-6" : "bg-primary-foreground/40"
+              }`}
+            />
+          ))}
         </div>
       </section>
 
