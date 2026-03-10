@@ -159,6 +159,21 @@ export default function PlanPage() {
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                   <span>$100</span><span>$10,000</span>
                 </div>
+                <div className="mt-3">
+                  <Label className="text-xs text-muted-foreground">Or enter amount</Label>
+                  <Input
+                    type="number"
+                    min={100}
+                    max={10000}
+                    value={form.budget[0]}
+                    onChange={(e) => {
+                      const val = Math.max(100, Math.min(10000, Number(e.target.value) || 100));
+                      updateForm("budget", [val]);
+                    }}
+                    className="h-10 mt-1 w-40"
+                    placeholder="$2,000"
+                  />
+                </div>
               </div>
             </div>
           )}

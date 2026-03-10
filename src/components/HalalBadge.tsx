@@ -25,8 +25,9 @@ export function HalalBadge({ badge }: { badge: BadgeType }) {
 }
 
 export function ConfidenceIndicator({ score }: { score: number }) {
-  const color = score >= 90 ? "text-emerald bg-emerald-light" : score >= 70 ? "text-gold bg-gold-light" : "text-muted-foreground bg-muted";
-  const label = score >= 90 ? "High Confidence" : score >= 70 ? "Moderate" : "Needs Check";
+  if (score < 70) return null;
+  const color = score >= 90 ? "text-emerald bg-emerald-light" : "text-gold bg-gold-light";
+  const label = score >= 90 ? "High Confidence" : "Moderate";
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>
       {score}% — {label}

@@ -30,7 +30,7 @@ export const destinations = [
 
 export const travelerTypes = [
   { value: "solo", label: "Solo Traveler", icon: "🧳" },
-  { value: "couple", label: "Couple", icon: "💑" },
+  { value: "couple", label: "Couple", icon: "👫" },
   { value: "family", label: "Family with Kids", icon: "👨‍👩‍👧‍👦" },
 ];
 
