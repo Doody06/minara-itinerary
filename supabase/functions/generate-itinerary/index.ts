@@ -86,7 +86,8 @@ RULES:
 10. Give each item a unique id like "day-itemnum" (e.g., "1-1", "1-2", "2-1").
 11. Include a cost estimate for food items.
 12. For items from the database, use their confidence_score and halal_status. Add an explanation for why this place was chosen.
-13. Each day needs a descriptive title mentioning the area/theme.`;
+13. Each day needs a descriptive title mentioning the area/theme.
+14. CRITICAL: You MUST generate EXACTLY the number of days requested. If the user asks for a 20-day trip, you MUST return 20 day objects. Do NOT shorten or truncate. Every single day must be planned.`;
 
     let userPrompt = `Create a ${days}-day itinerary for ${destination}.
 
