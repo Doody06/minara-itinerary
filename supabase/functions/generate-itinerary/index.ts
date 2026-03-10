@@ -58,10 +58,11 @@ serve(async (req) => {
       throw new Error("Failed to query hotels database");
     }
 
-    // Calculate trip duration
+    // Calculate trip duration (inclusive of both start and end dates)
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    console.log(`Trip duration: ${days} days (${startDate} to ${endDate})`);
 
     // Build the system prompt
     const systemPrompt = `You are MINARA, an AI halal travel itinerary planner. You create detailed, day-by-day travel itineraries for Muslim travelers.
@@ -85,11 +86,12 @@ RULES:
 10. Give each item a unique id like "day-itemnum" (e.g., "1-1", "1-2", "2-1").
 11. Include a cost estimate for food items.
 12. For items from the database, use their confidence_score and halal_status. Add an explanation for why this place was chosen.
-13. Each day needs a descriptive title mentioning the area/theme.`;
+13. Each day needs a descriptive title mentioning the area/theme.
+14. CRITICAL: You MUST generate EXACTLY the number of days requested. If the user asks for a 20-day trip, you MUST return 20 day objects. Do NOT shorten or truncate. Every single day must be planned.`;
 
-    let userPrompt = `Create a ${days}-day itinerary for ${destination}.
+    let userPrompt = `Create a COMPLETE ${days}-day itinerary for ${destination}. You MUST generate exactly ${days} days (Day 1 through Day ${days}). Do not skip any days.
 
-Travel dates: ${startDate} to ${endDate}
+Travel dates: ${startDate} to ${endDate} (${days} days total)
 Traveler type: ${travelerType}
 Budget: $${budget}
 Interests: ${interests?.join(", ") || "General sightseeing"}
