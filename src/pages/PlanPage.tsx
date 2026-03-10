@@ -169,8 +169,12 @@ export default function PlanPage() {
                     max={10000}
                     value={form.budget[0]}
                     onChange={(e) => {
-                      const val = Math.max(100, Math.min(10000, Number(e.target.value) || 100));
-                      updateForm("budget", [val]);
+                      const val = Number(e.target.value);
+                      if (!isNaN(val)) updateForm("budget", [val]);
+                    }}
+                    onBlur={() => {
+                      const clamped = Math.max(100, Math.min(10000, form.budget[0] || 100));
+                      updateForm("budget", [clamped]);
                     }}
                     className="h-10 mt-1 w-40"
                     placeholder="$2,000"
