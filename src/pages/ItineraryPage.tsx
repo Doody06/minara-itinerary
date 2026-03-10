@@ -196,7 +196,7 @@ export default function ItineraryPage() {
 
               <div className="space-y-3">
                 {currentItinerary[activeDay]?.items.map((item) => (
-                  <ItemCard key={item.id} item={item} />
+                  <ItemCard key={item.id} item={item} onSelect={setSelectedItem} />
                 ))}
               </div>
             </div>
