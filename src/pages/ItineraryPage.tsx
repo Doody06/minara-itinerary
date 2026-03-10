@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { HalalBadge, ConfidenceIndicator } from "@/components/HalalBadge";
+import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
 import { useItinerary } from "@/lib/itineraryContext";
 import type { ItineraryItem } from "@/data/dummyData";
 import {
