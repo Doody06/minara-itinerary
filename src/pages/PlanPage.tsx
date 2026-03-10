@@ -36,17 +36,6 @@ export default function PlanPage() {
     pace: savedPrefs?.pace || "balanced",
     specificNeeds: savedPrefs?.specificNeeds || "",
   });
-  const [form, setForm] = useState({
-    destination: "",
-    startDate: "",
-    endDate: "",
-    travelerType: "",
-    budget: [2000],
-    selectedInterests: [] as string[],
-    selectedPreferences: [] as string[],
-    pace: "balanced",
-    specificNeeds: "",
-  });
 
   const updateForm = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
 
