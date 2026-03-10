@@ -257,6 +257,13 @@ export default function ItineraryPage() {
           </div>
         )}
       </div>
+
+      {/* Place Detail Dialog */}
+      <PlaceDetailDialog
+        item={selectedItem}
+        open={!!selectedItem}
+        onOpenChange={(open) => { if (!open) setSelectedItem(null); }}
+      />
     </div>
   );
 }
