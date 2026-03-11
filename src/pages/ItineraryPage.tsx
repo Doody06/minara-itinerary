@@ -6,8 +6,9 @@ import { useItinerary } from "@/lib/itineraryContext";
 import type { ItineraryItem } from "@/data/dummyData";
 import {
   Utensils, MapPin, RotateCcw, ArrowLeft, ChevronDown, ChevronUp,
-  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2, ExternalLink
+  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2
 } from "lucide-react";
+import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
 
 const typeIcons: Record<string, React.ElementType> = {
   food: Utensils,
@@ -22,19 +23,14 @@ const quickEdits = [
   "More Luxury", "Less Walking", "More Food-Focused",
 ];
 
-function openInGoogleMaps(title: string, destination?: string) {
-  const query = encodeURIComponent(`${title}${destination ? ` ${destination}` : ""}`);
-  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
-}
-
-function ItemCard({ item, destination }: { item: ItineraryItem; destination?: string }) {
+function ItemCard({ item, onSelect }: { item: ItineraryItem; onSelect: (item: ItineraryItem) => void }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = typeIcons[item.type] || Landmark;
 
   return (
     <div
       className="bg-card rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer"
-      onClick={() => openInGoogleMaps(item.title, destination)}
+      onClick={() => onSelect(item)}
     >
       <div className="flex gap-4">
         <div className="flex flex-col items-center">
@@ -51,9 +47,8 @@ function ItemCard({ item, destination }: { item: ItineraryItem; destination?: st
           <div className="flex items-start justify-between gap-2">
             <div>
               <span className="text-xs font-medium text-muted-foreground">{item.time}</span>
-              <h4 className="font-display font-semibold text-base group-hover:text-primary transition-colors flex items-center gap-1.5">
+              <h4 className="font-display font-semibold text-base group-hover:text-primary transition-colors">
                 {item.title}
-                <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
               </h4>
             </div>
             {item.cost && (
@@ -90,7 +85,8 @@ export default function ItineraryPage() {
   const navigate = useNavigate();
   const { itinerary, hotel, isGenerating, quickAdjust, regenerate, preferences } = useItinerary();
   const [activeDay, setActiveDay] = useState(0);
-  
+  const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
+
 
   // If no itinerary, redirect to plan
   if (!itinerary && !isGenerating) {
@@ -203,9 +199,16 @@ export default function ItineraryPage() {
 
               <div className="space-y-3">
                 {currentItinerary[activeDay]?.items.map((item) => (
-                  <ItemCard key={item.id} item={item} destination={preferences?.destination} />
+                  <ItemCard key={item.id} item={item} onSelect={setSelectedItem} />
                 ))}
               </div>
+
+              <PlaceDetailDialog
+                item={selectedItem}
+                open={!!selectedItem}
+                onOpenChange={(open) => !open && setSelectedItem(null)}
+                destination={preferences?.destination}
+              />
             </div>
 
             {/* Sidebar */}
