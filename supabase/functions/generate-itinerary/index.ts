@@ -88,7 +88,8 @@ RULES:
 11. Include a cost estimate for food items.
 12. For items from the database, use their confidence_score and halal_status. Add an explanation for why this place was chosen.
 13. Each day needs a descriptive title mentioning the area/theme.
-14. CRITICAL: You MUST generate EXACTLY the number of days requested. If the user asks for a 20-day trip, you MUST return 20 day objects. Do NOT shorten or truncate. Every single day must be planned.`;
+14. CRITICAL: You MUST generate EXACTLY ${days} days. Every single day from Day 1 to Day ${days} must be present. Do NOT skip, shorten, or truncate. Generate ALL days in a single response.
+15. Keep each item description concise (1-2 sentences) to fit within response limits.`;
 
     let userPrompt = `Create a COMPLETE ${days}-day itinerary for ${destination}. You MUST generate exactly ${days} days (Day 1 through Day ${days}). Do not skip any days.
 
