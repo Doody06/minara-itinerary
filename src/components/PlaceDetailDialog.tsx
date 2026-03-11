@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +5,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { HalalBadge } from "@/components/HalalBadge";
-import { MapPin, Clock, DollarSign, Utensils, Landmark, Bus, Hotel } from "lucide-react";
+import { MapPin, Clock, DollarSign, Utensils, Landmark, Bus, Hotel, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { ItineraryItem } from "@/data/dummyData";
 
 const typeLabels: Record<string, { label: string; icon: React.ElementType }> = {
@@ -17,21 +17,24 @@ const typeLabels: Record<string, { label: string; icon: React.ElementType }> = {
   hotel: { label: "Hotel / Accommodation", icon: Hotel },
 };
 
-// Generate a relevant Unsplash image URL based on the place title
-function getPlaceImageUrl(title: string, type: string): string {
-  const query = encodeURIComponent(`${title} ${type === "food" ? "restaurant" : type === "prayer" ? "mosque" : "travel landmark"}`);
-  return `https://source.unsplash.com/800x400/?${query}`;
+function getMapEmbedUrl(title: string, destination?: string): string {
+  const query = encodeURIComponent(`${title}${destination ? ` ${destination}` : ""}`);
+  return `https://www.google.com/maps?q=${query}&output=embed`;
+}
+
+function getGoogleMapsUrl(title: string, destination?: string): string {
+  const query = encodeURIComponent(`${title}${destination ? ` ${destination}` : ""}`);
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
 interface PlaceDetailDialogProps {
   item: ItineraryItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  destination?: string;
 }
 
-export function PlaceDetailDialog({ item, open, onOpenChange }: PlaceDetailDialogProps) {
-  const [imgError, setImgError] = useState(false);
-
+export function PlaceDetailDialog({ item, open, onOpenChange, destination }: PlaceDetailDialogProps) {
   if (!item) return null;
 
   const typeInfo = typeLabels[item.type] || typeLabels.activity;
@@ -40,26 +43,19 @@ export function PlaceDetailDialog({ item, open, onOpenChange }: PlaceDetailDialo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden rounded-xl">
-        {/* Image */}
-        <div className="relative h-48 w-full bg-muted overflow-hidden">
-          {!imgError ? (
-            <img
-              src={getPlaceImageUrl(item.title, item.type)}
-              alt={item.title}
-              className="w-full h-full object-cover"
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
-              <TypeIcon className="w-16 h-16 text-primary/40" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-          <div className="absolute bottom-3 left-4 right-4">
-            <div className="flex items-center gap-2 text-xs text-primary-foreground/80 mb-1">
-              <TypeIcon className="w-3.5 h-3.5" />
-              <span>{typeInfo.label}</span>
-            </div>
+        {/* Embedded Google Map */}
+        <div className="relative h-52 w-full bg-muted overflow-hidden">
+          <iframe
+            src={getMapEmbedUrl(item.title, destination)}
+            className="w-full h-full border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title={`Map of ${item.title}`}
+          />
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-background/80 to-transparent h-12" />
+          <div className="absolute bottom-2 left-4 flex items-center gap-2 text-xs text-muted-foreground">
+            <TypeIcon className="w-3.5 h-3.5" />
+            <span>{typeInfo.label}</span>
           </div>
         </div>
 
@@ -102,6 +98,16 @@ export function PlaceDetailDialog({ item, open, onOpenChange }: PlaceDetailDialo
               {item.explanation}
             </div>
           )}
+
+          {/* Open in Google Maps button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2"
+            onClick={() => window.open(getGoogleMapsUrl(item.title, destination), "_blank")}
+          >
+            <ExternalLink className="w-4 h-4" /> Open in Google Maps
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
