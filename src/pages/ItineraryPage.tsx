@@ -22,14 +22,19 @@ const quickEdits = [
   "More Luxury", "Less Walking", "More Food-Focused",
 ];
 
-function ItemCard({ item, onSelect }: { item: ItineraryItem; onSelect: (item: ItineraryItem) => void }) {
+function openInGoogleMaps(title: string, destination?: string) {
+  const query = encodeURIComponent(`${title}${destination ? ` ${destination}` : ""}`);
+  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
+}
+
+function ItemCard({ item, destination }: { item: ItineraryItem; destination?: string }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = typeIcons[item.type] || Landmark;
 
   return (
     <div
       className="bg-card rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer"
-      onClick={() => onSelect(item)}
+      onClick={() => openInGoogleMaps(item.title, destination)}
     >
       <div className="flex gap-4">
         <div className="flex flex-col items-center">
