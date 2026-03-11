@@ -2,12 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { HalalBadge, ConfidenceIndicator } from "@/components/HalalBadge";
-import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
 import { useItinerary } from "@/lib/itineraryContext";
 import type { ItineraryItem } from "@/data/dummyData";
 import {
   Utensils, MapPin, RotateCcw, ArrowLeft, ChevronDown, ChevronUp,
-  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2
+  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2, ExternalLink
 } from "lucide-react";
 
 const typeIcons: Record<string, React.ElementType> = {
