@@ -199,9 +199,16 @@ export default function ItineraryPage() {
 
               <div className="space-y-3">
                 {currentItinerary[activeDay]?.items.map((item) => (
-                  <ItemCard key={item.id} item={item} destination={preferences?.destination} />
+                  <ItemCard key={item.id} item={item} onSelect={setSelectedItem} />
                 ))}
               </div>
+
+              <PlaceDetailDialog
+                item={selectedItem}
+                open={!!selectedItem}
+                onOpenChange={(open) => !open && setSelectedItem(null)}
+                destination={preferences?.destination}
+              />
             </div>
 
             {/* Sidebar */}
