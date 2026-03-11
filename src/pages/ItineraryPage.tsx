@@ -51,7 +51,10 @@ function ItemCard({ item, destination }: { item: ItineraryItem; destination?: st
           <div className="flex items-start justify-between gap-2">
             <div>
               <span className="text-xs font-medium text-muted-foreground">{item.time}</span>
-              <h4 className="font-display font-semibold text-base group-hover:text-primary transition-colors">{item.title}</h4>
+              <h4 className="font-display font-semibold text-base group-hover:text-primary transition-colors flex items-center gap-1.5">
+                {item.title}
+                <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+              </h4>
             </div>
             {item.cost && (
               <span className="text-sm font-medium text-gold shrink-0">{item.cost}</span>
