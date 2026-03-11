@@ -54,6 +54,10 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
+      // Create an AbortController with a 120s timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
       const { data, error: fnError } = await supabase.functions.invoke(
         "generate-itinerary",
         {
@@ -73,6 +77,8 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
         }
       );
 
+      clearTimeout(timeoutId);
+
       if (fnError) {
         throw new Error(fnError.message || "Failed to generate itinerary");
       }
@@ -85,7 +91,9 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
       setHotel(data.hotel);
       return true;
     } catch (e: any) {
-      const msg = e?.message || "Failed to generate itinerary";
+      const msg = e?.name === "AbortError"
+        ? "Generation timed out. Try a shorter trip or simpler preferences."
+        : (e?.message || "Failed to generate itinerary");
       setError(msg);
       toast({
         title: "Generation failed",
