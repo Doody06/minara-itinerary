@@ -85,7 +85,8 @@ export default function ItineraryPage() {
   const navigate = useNavigate();
   const { itinerary, hotel, isGenerating, quickAdjust, regenerate, preferences } = useItinerary();
   const [activeDay, setActiveDay] = useState(0);
-  
+  const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
+
 
   // If no itinerary, redirect to plan
   if (!itinerary && !isGenerating) {
