@@ -283,6 +283,289 @@ Please modify the itinerary based on the adjustment request. Keep the same struc
 
     const itineraryData = JSON.parse(toolCall.function.arguments);
 
+    // --- Learn new places: find items not in DB and research them ---
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const existingPlaceNames = new Set(
+      (places || []).map((p: any) => p.name.toLowerCase())
+    );
+    const existingHotelNames = new Set(
+      (hotels || []).map((h: any) => h.name.toLowerCase())
+    );
+
+    // Collect new place names from itinerary (skip transport)
+    const newPlaceItems: { title: string; type: string }[] = [];
+    for (const day of itineraryData.days || []) {
+      for (const item of day.items || []) {
+        if (
+          item.type !== "transport" &&
+          !existingPlaceNames.has(item.title.toLowerCase())
+        ) {
+          newPlaceItems.push({ title: item.title, type: item.type });
+        }
+      }
+    }
+
+    // Check if hotel is new
+    const hotelIsNew =
+      itineraryData.hotel &&
+      !existingHotelNames.has(itineraryData.hotel.name.toLowerCase());
+
+    // Deduplicate
+    const uniqueNewPlaces = [
+      ...new Map(newPlaceItems.map((p) => [p.title.toLowerCase(), p])).values(),
+    ];
+
+    if (uniqueNewPlaces.length > 0 || hotelIsNew) {
+      console.log(
+        `Learning ${uniqueNewPlaces.length} new places and ${hotelIsNew ? 1 : 0} new hotel for ${destination}`
+      );
+
+      // Use AI to research all new places in one call
+      const researchItems = [
+        ...uniqueNewPlaces.map((p) => `${p.title} (type: ${p.type})`),
+        ...(hotelIsNew ? [`${itineraryData.hotel.name} (type: hotel)`] : []),
+      ];
+
+      try {
+        const researchResponse = await fetch(
+          "https://ai.gateway.lovable.dev/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-3-flash-preview",
+              messages: [
+                {
+                  role: "system",
+                  content: `You are a travel research assistant. For each place/hotel, provide accurate details including description, area/neighborhood, halal status for Muslim travelers, relevant tags, cost range, and approximate GPS coordinates. Be factual and concise.`,
+                },
+                {
+                  role: "user",
+                  content: `Research the following places/hotels in ${destination}. Provide detailed info for each:\n${researchItems.join("\n")}`,
+                },
+              ],
+              tools: [
+                {
+                  type: "function",
+                  function: {
+                    name: "save_researched_places",
+                    description:
+                      "Save researched place and hotel details",
+                    parameters: {
+                      type: "object",
+                      properties: {
+                        places: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              name: { type: "string" },
+                              description: {
+                                type: "string",
+                                description: "2-3 sentence description",
+                              },
+                              type: {
+                                type: "string",
+                                enum: [
+                                  "activity",
+                                  "food",
+                                  "prayer",
+                                  "transport",
+                                  "hotel",
+                                ],
+                              },
+                              area: {
+                                type: "string",
+                                description: "Neighborhood or district",
+                              },
+                              halal_status: {
+                                type: "string",
+                                enum: [
+                                  "verified",
+                                  "muslim-friendly",
+                                  "needs-check",
+                                ],
+                              },
+                              badges: {
+                                type: "array",
+                                items: { type: "string" },
+                              },
+                              tags: {
+                                type: "array",
+                                items: { type: "string" },
+                              },
+                              confidence_score: {
+                                type: "number",
+                                description: "0-100 confidence in halal info",
+                              },
+                              cost_range: {
+                                type: "string",
+                                description:
+                                  "e.g. $, $$, $$$, Free",
+                              },
+                              latitude: { type: "number" },
+                              longitude: { type: "number" },
+                            },
+                            required: [
+                              "name",
+                              "description",
+                              "type",
+                              "area",
+                              "halal_status",
+                              "badges",
+                              "tags",
+                              "confidence_score",
+                            ],
+                            additionalProperties: false,
+                          },
+                        },
+                        hotels: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              name: { type: "string" },
+                              description: { type: "string" },
+                              area: { type: "string" },
+                              halal_status: {
+                                type: "string",
+                                enum: [
+                                  "verified",
+                                  "muslim-friendly",
+                                  "needs-check",
+                                ],
+                              },
+                              badges: {
+                                type: "array",
+                                items: { type: "string" },
+                              },
+                              tags: {
+                                type: "array",
+                                items: { type: "string" },
+                              },
+                              confidence_score: { type: "number" },
+                              price_range: { type: "string" },
+                              star_rating: { type: "number" },
+                            },
+                            required: [
+                              "name",
+                              "description",
+                              "area",
+                              "halal_status",
+                              "badges",
+                              "tags",
+                              "confidence_score",
+                              "price_range",
+                            ],
+                            additionalProperties: false,
+                          },
+                        },
+                      },
+                      required: ["places", "hotels"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+              ],
+              tool_choice: {
+                type: "function",
+                function: { name: "save_researched_places" },
+              },
+            }),
+          }
+        );
+
+        if (researchResponse.ok) {
+          const researchData = await researchResponse.json();
+          const researchToolCall =
+            researchData.choices?.[0]?.message?.tool_calls?.[0];
+
+          if (researchToolCall?.function?.arguments) {
+            const learned = JSON.parse(researchToolCall.function.arguments);
+
+            // Insert new places
+            if (learned.places?.length > 0) {
+              const placesToInsert = learned.places.map((p: any) => ({
+                name: p.name,
+                description: p.description,
+                type: p.type,
+                destination,
+                area: p.area || null,
+                halal_status: p.halal_status || "needs-check",
+                badges: p.badges || [],
+                tags: p.tags || [],
+                confidence_score: p.confidence_score || 60,
+                cost_range: p.cost_range || null,
+                latitude: p.latitude || null,
+                longitude: p.longitude || null,
+              }));
+
+              const { error: insertError } = await supabaseAdmin
+                .from("places")
+                .upsert(placesToInsert, {
+                  onConflict: "name,destination",
+                  ignoreDuplicates: true,
+                });
+
+              if (insertError) {
+                console.error("Failed to insert new places:", insertError);
+              } else {
+                console.log(
+                  `Successfully learned ${placesToInsert.length} new places`
+                );
+              }
+            }
+
+            // Insert new hotels
+            if (learned.hotels?.length > 0) {
+              const hotelsToInsert = learned.hotels.map((h: any) => ({
+                name: h.name,
+                description: h.description,
+                destination,
+                area: h.area || null,
+                halal_status: h.halal_status || "needs-check",
+                badges: h.badges || [],
+                tags: h.tags || [],
+                confidence_score: h.confidence_score || 60,
+                price_range: h.price_range || null,
+                star_rating: h.star_rating || null,
+              }));
+
+              const { error: insertError } = await supabaseAdmin
+                .from("hotels")
+                .upsert(hotelsToInsert, {
+                  onConflict: "name,destination",
+                  ignoreDuplicates: true,
+                });
+
+              if (insertError) {
+                console.error("Failed to insert new hotels:", insertError);
+              } else {
+                console.log(
+                  `Successfully learned ${hotelsToInsert.length} new hotels`
+                );
+              }
+            }
+          }
+        } else {
+          console.error(
+            "Research AI call failed:",
+            researchResponse.status
+          );
+        }
+      } catch (researchErr) {
+        // Don't fail the main request if learning fails
+        console.error("Learning new places failed:", researchErr);
+      }
+    }
+
     return new Response(JSON.stringify(itineraryData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
