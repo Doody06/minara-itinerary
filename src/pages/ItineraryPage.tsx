@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { HalalBadge, ConfidenceIndicator } from "@/components/HalalBadge";
 import { useItinerary } from "@/lib/itineraryContext";
 import type { ItineraryItem } from "@/data/dummyData";
 import {
   Utensils, MapPin, RotateCcw, ArrowLeft, ChevronDown, ChevronUp,
-  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2
+  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2,
+  PenLine, Send
 } from "lucide-react";
 import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
 
@@ -23,13 +25,76 @@ const quickEdits = [
   "More Luxury", "Less Walking", "More Food-Focused",
 ];
 
-function ItemCard({ item, onSelect }: { item: ItineraryItem; onSelect: (item: ItineraryItem) => void }) {
+function DetailedAdjustInput({
+  placeholder,
+  onSubmit,
+  disabled,
+}: {
+  placeholder: string;
+  onSubmit: (text: string) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+
+  const handleSubmit = () => {
+    if (!text.trim()) return;
+    onSubmit(text.trim());
+    setText("");
+    setOpen(false);
+  };
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+        disabled={disabled}
+      >
+        <PenLine className="w-3.5 h-3.5" />
+        {open ? "Cancel" : "Detailed adjust"}
+        {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+      {open && (
+        <div className="mt-2 space-y-2 animate-fade-in">
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={placeholder}
+            className="text-sm min-h-[60px] resize-none"
+            disabled={disabled}
+          />
+          <Button
+            size="sm"
+            onClick={handleSubmit}
+            disabled={disabled || !text.trim()}
+            className="gap-1.5"
+          >
+            <Send className="w-3.5 h-3.5" /> Apply Change
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ItemCard({
+  item,
+  onSelect,
+  onDetailedAdjust,
+  isAdjusting,
+}: {
+  item: ItineraryItem;
+  onSelect: (item: ItineraryItem) => void;
+  onDetailedAdjust: (instruction: string, itemId: string) => void;
+  isAdjusting: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
   const Icon = typeIcons[item.type] || Landmark;
 
   return (
     <div
-      className="bg-card rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer"
+      className={`bg-card rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer ${isAdjusting ? "opacity-60 pointer-events-none" : ""}`}
       onClick={() => onSelect(item)}
     >
       <div className="flex gap-4">
@@ -75,6 +140,13 @@ function ItemCard({ item, onSelect }: { item: ItineraryItem; onSelect: (item: It
               {item.explanation && <p className="text-muted-foreground">{item.explanation}</p>}
             </div>
           )}
+          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+            <DetailedAdjustInput
+              placeholder={`e.g. "Replace this with a cheaper option" or "Change to a halal-certified restaurant"`}
+              onSubmit={(text) => onDetailedAdjust(text, item.id)}
+              disabled={isAdjusting}
+            />
+          </div>
         </div>
       </div>
     </div>
