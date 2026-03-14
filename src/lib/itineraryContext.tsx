@@ -29,10 +29,12 @@ interface ItineraryState {
   itinerary: DayPlan[] | null;
   hotel: HotelSuggestion | null;
   isGenerating: boolean;
+  isDetailedAdjusting: boolean;
   error: string | null;
   setPreferences: (prefs: TripPreferences) => void;
   generateItinerary: (prefs: TripPreferences) => Promise<boolean>;
   quickAdjust: (adjustment: string) => Promise<void>;
+  detailedAdjust: (instruction: string, dayNumber?: number, itemId?: string) => Promise<void>;
   regenerate: () => Promise<void>;
 }
 
@@ -43,6 +45,7 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
   const [itinerary, setItinerary] = useState<DayPlan[] | null>(null);
   const [hotel, setHotel] = useState<HotelSuggestion | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDetailedAdjusting, setIsDetailedAdjusting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const callGenerateFunction = async (
@@ -121,6 +124,67 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
     await callGenerateFunction(preferences);
   };
 
+  const detailedAdjustFn = async (instruction: string, dayNumber?: number, itemId?: string) => {
+    if (!preferences || !itinerary) return;
+    setIsDetailedAdjusting(true);
+    setError(null);
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+      // Only send the targeted day(s) to the AI
+      const targetDay = dayNumber ? itinerary.find(d => d.day === dayNumber) : undefined;
+
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "generate-itinerary",
+        {
+          body: {
+            destination: preferences.destination,
+            startDate: preferences.startDate,
+            endDate: preferences.endDate,
+            travelerType: preferences.travelerType,
+            budget: preferences.budget,
+            interests: preferences.selectedInterests,
+            halalPreferences: preferences.selectedPreferences,
+            pace: preferences.pace,
+            specificNeeds: preferences.specificNeeds,
+            detailedAdjust: {
+              instruction,
+              targetDayNumber: dayNumber || undefined,
+              targetItemId: itemId || undefined,
+              targetDay: targetDay || undefined,
+            },
+          },
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (fnError) throw new Error(fnError.message || "Failed to adjust itinerary");
+      if (data?.error) throw new Error(data.error);
+
+      // Merge the adjusted day back into the full itinerary
+      if (dayNumber && data.adjustedDay) {
+        setItinerary(prev =>
+          (prev || []).map(d => d.day === dayNumber ? data.adjustedDay : d)
+        );
+      } else if (data.days) {
+        setItinerary(data.days);
+      }
+
+      if (data.hotel) setHotel(data.hotel);
+    } catch (e: any) {
+      const msg = e?.name === "AbortError"
+        ? "Adjustment timed out. Try a simpler request."
+        : (e?.message || "Failed to adjust itinerary");
+      setError(msg);
+      toast({ title: "Adjustment failed", description: msg, variant: "destructive" });
+    } finally {
+      setIsDetailedAdjusting(false);
+    }
+  };
+
   return (
     <ItineraryContext.Provider
       value={{
@@ -128,10 +192,12 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
         itinerary,
         hotel,
         isGenerating,
+        isDetailedAdjusting,
         error,
         setPreferences,
         generateItinerary,
         quickAdjust: quickAdjustFn,
+        detailedAdjust: detailedAdjustFn,
         regenerate,
       }}
     >

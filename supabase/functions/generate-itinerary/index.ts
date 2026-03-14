@@ -25,6 +25,7 @@ serve(async (req) => {
       specificNeeds,
       quickAdjust,
       currentItinerary,
+      detailedAdjust,
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -112,6 +113,42 @@ Please modify the itinerary based on the adjustment request. Keep the same struc
 - "More Budget-Friendly" → Replace expensive restaurants with budget options
 - "More Food-Focused" → Add more food experiences, food tours, street food stops
 - "Less Walking" → Group items closer together, add more transport/rest stops`;
+    }
+
+    // --- DETAILED ADJUST: only regenerate a specific day or item ---
+    const isDetailedAdjust = !!detailedAdjust;
+    let detailedAdjustDayNumber: number | undefined;
+
+    if (isDetailedAdjust) {
+      const { instruction, targetDayNumber, targetItemId, targetDay } = detailedAdjust;
+      detailedAdjustDayNumber = targetDayNumber;
+
+      if (targetDayNumber && targetDay) {
+        const targetItemTitle = targetItemId
+          ? targetDay.items?.find((i: any) => i.id === targetItemId)?.title
+          : undefined;
+
+        userPrompt = `DETAILED ADJUSTMENT for Day ${targetDayNumber} of a ${days}-day trip to ${destination}.
+
+Travel dates: ${startDate} to ${endDate}
+Traveler type: ${travelerType}
+Budget: $${budget}
+Interests: ${interests?.join(", ") || "General sightseeing"}
+Halal preferences: ${halalPreferences?.join(", ") || "Standard halal"}
+Pace: ${pace}
+
+Here is the CURRENT Day ${targetDayNumber} plan:
+${JSON.stringify(targetDay, null, 2)}
+
+USER'S SPECIFIC CHANGE REQUEST: "${instruction}"
+${targetItemId && targetItemTitle ? `This change is specifically about the item "${targetItemTitle}" (id: ${targetItemId}). Only modify this specific item and adjust surrounding times if needed. Keep all other items the same.` : `Apply this change to Day ${targetDayNumber} only. Keep the same day structure but modify as requested.`}
+
+IMPORTANT: Return ONLY Day ${targetDayNumber} with the modifications applied. Keep the day number as ${targetDayNumber}. Maintain the same ID format.`;
+      } else {
+        // No specific day targeted — adjust the full itinerary
+        userPrompt += `\n\nDETAILED ADJUSTMENT REQUEST: "${instruction}"
+Please apply this change across the entire itinerary.`;
+      }
     }
 
     // Call Lovable AI Gateway with tool calling for structured output
@@ -564,6 +601,16 @@ Please modify the itinerary based on the adjustment request. Keep the same struc
         // Don't fail the main request if learning fails
         console.error("Learning new places failed:", researchErr);
       }
+    }
+
+    // For detailed adjust targeting a single day, return adjustedDay
+    if (isDetailedAdjust && detailedAdjustDayNumber && itineraryData.days?.length > 0) {
+      const adjustedDay = itineraryData.days.find((d: any) => d.day === detailedAdjustDayNumber) || itineraryData.days[0];
+      // Force correct day number
+      adjustedDay.day = detailedAdjustDayNumber;
+      return new Response(JSON.stringify({ adjustedDay, hotel: itineraryData.hotel }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify(itineraryData), {

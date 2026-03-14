@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { HalalBadge, ConfidenceIndicator } from "@/components/HalalBadge";
 import { useItinerary } from "@/lib/itineraryContext";
 import type { ItineraryItem } from "@/data/dummyData";
 import {
   Utensils, MapPin, RotateCcw, ArrowLeft, ChevronDown, ChevronUp,
-  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2
+  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2,
+  PenLine, Send
 } from "lucide-react";
 import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
 
@@ -23,13 +25,76 @@ const quickEdits = [
   "More Luxury", "Less Walking", "More Food-Focused",
 ];
 
-function ItemCard({ item, onSelect }: { item: ItineraryItem; onSelect: (item: ItineraryItem) => void }) {
+function DetailedAdjustInput({
+  placeholder,
+  onSubmit,
+  disabled,
+}: {
+  placeholder: string;
+  onSubmit: (text: string) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+
+  const handleSubmit = () => {
+    if (!text.trim()) return;
+    onSubmit(text.trim());
+    setText("");
+    setOpen(false);
+  };
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+        disabled={disabled}
+      >
+        <PenLine className="w-3.5 h-3.5" />
+        {open ? "Cancel" : "Detailed adjust"}
+        {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+      {open && (
+        <div className="mt-2 space-y-2 animate-fade-in">
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={placeholder}
+            className="text-sm min-h-[60px] resize-none"
+            disabled={disabled}
+          />
+          <Button
+            size="sm"
+            onClick={handleSubmit}
+            disabled={disabled || !text.trim()}
+            className="gap-1.5"
+          >
+            <Send className="w-3.5 h-3.5" /> Apply Change
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ItemCard({
+  item,
+  onSelect,
+  onDetailedAdjust,
+  isAdjusting,
+}: {
+  item: ItineraryItem;
+  onSelect: (item: ItineraryItem) => void;
+  onDetailedAdjust: (instruction: string, itemId: string) => void;
+  isAdjusting: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
   const Icon = typeIcons[item.type] || Landmark;
 
   return (
     <div
-      className="bg-card rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer"
+      className={`bg-card rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer ${isAdjusting ? "opacity-60 pointer-events-none" : ""}`}
       onClick={() => onSelect(item)}
     >
       <div className="flex gap-4">
@@ -75,6 +140,13 @@ function ItemCard({ item, onSelect }: { item: ItineraryItem; onSelect: (item: It
               {item.explanation && <p className="text-muted-foreground">{item.explanation}</p>}
             </div>
           )}
+          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+            <DetailedAdjustInput
+              placeholder={`e.g. "Replace this with a cheaper option" or "Change to a halal-certified restaurant"`}
+              onSubmit={(text) => onDetailedAdjust(text, item.id)}
+              disabled={isAdjusting}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -83,7 +155,7 @@ function ItemCard({ item, onSelect }: { item: ItineraryItem; onSelect: (item: It
 
 export default function ItineraryPage() {
   const navigate = useNavigate();
-  const { itinerary, hotel, isGenerating, quickAdjust, regenerate, preferences } = useItinerary();
+  const { itinerary, hotel, isGenerating, isDetailedAdjusting, quickAdjust, detailedAdjust, regenerate, preferences } = useItinerary();
   const [activeDay, setActiveDay] = useState(0);
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
 
@@ -113,6 +185,16 @@ export default function ItineraryPage() {
     setActiveDay(0);
   };
 
+  const handleDayDetailedAdjust = async (instruction: string) => {
+    const dayNumber = currentItinerary[activeDay]?.day;
+    if (dayNumber) await detailedAdjust(instruction, dayNumber);
+  };
+
+  const handleItemDetailedAdjust = async (instruction: string, itemId: string) => {
+    const dayNumber = currentItinerary[activeDay]?.day;
+    if (dayNumber) await detailedAdjust(instruction, dayNumber, itemId);
+  };
+
   const currentItinerary = itinerary || [];
   const destinationLabel = preferences?.destination
     ? preferences.destination.charAt(0).toUpperCase() + preferences.destination.slice(1)
@@ -127,6 +209,15 @@ export default function ItineraryPage() {
             <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
             <h3 className="text-lg font-display font-bold mb-1">Updating Itinerary</h3>
             <p className="text-muted-foreground text-sm">Adjusting your plan with AI...</p>
+          </div>
+        </div>
+      )}
+      {isDetailedAdjusting && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-card rounded-2xl border border-border p-8 max-w-md text-center shadow-xl">
+            <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+            <h3 className="text-lg font-display font-bold mb-1">Applying Your Changes</h3>
+            <p className="text-muted-foreground text-sm">Only updating the targeted section...</p>
           </div>
         </div>
       )}
@@ -193,13 +284,30 @@ export default function ItineraryPage() {
                 ))}
               </div>
 
-              <h3 className="font-display font-semibold text-lg mb-4 text-foreground">
-                {currentItinerary[activeDay]?.title}
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display font-semibold text-lg text-foreground">
+                  {currentItinerary[activeDay]?.title}
+                </h3>
+              </div>
+
+              {/* Day-level detailed adjust */}
+              <div className="mb-4">
+                <DetailedAdjustInput
+                  placeholder={`e.g. "Add a mosque visit in the morning" or "Make this day more relaxed"`}
+                  onSubmit={(text) => handleDayDetailedAdjust(text)}
+                  disabled={isDetailedAdjusting || isGenerating}
+                />
+              </div>
 
               <div className="space-y-3">
                 {currentItinerary[activeDay]?.items.map((item) => (
-                  <ItemCard key={item.id} item={item} onSelect={setSelectedItem} />
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    onSelect={setSelectedItem}
+                    onDetailedAdjust={handleItemDetailedAdjust}
+                    isAdjusting={isDetailedAdjusting}
+                  />
                 ))}
               </div>
 
