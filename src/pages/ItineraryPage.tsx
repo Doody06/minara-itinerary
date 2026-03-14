@@ -185,6 +185,16 @@ export default function ItineraryPage() {
     setActiveDay(0);
   };
 
+  const handleDayDetailedAdjust = async (instruction: string) => {
+    const dayNumber = currentItinerary[activeDay]?.day;
+    if (dayNumber) await detailedAdjust(instruction, dayNumber);
+  };
+
+  const handleItemDetailedAdjust = async (instruction: string, itemId: string) => {
+    const dayNumber = currentItinerary[activeDay]?.day;
+    if (dayNumber) await detailedAdjust(instruction, dayNumber, itemId);
+  };
+
   const currentItinerary = itinerary || [];
   const destinationLabel = preferences?.destination
     ? preferences.destination.charAt(0).toUpperCase() + preferences.destination.slice(1)
