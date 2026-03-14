@@ -29,10 +29,12 @@ interface ItineraryState {
   itinerary: DayPlan[] | null;
   hotel: HotelSuggestion | null;
   isGenerating: boolean;
+  isDetailedAdjusting: boolean;
   error: string | null;
   setPreferences: (prefs: TripPreferences) => void;
   generateItinerary: (prefs: TripPreferences) => Promise<boolean>;
   quickAdjust: (adjustment: string) => Promise<void>;
+  detailedAdjust: (instruction: string, dayNumber?: number, itemId?: string) => Promise<void>;
   regenerate: () => Promise<void>;
 }
 
