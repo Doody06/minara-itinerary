@@ -603,6 +603,16 @@ Please apply this change across the entire itinerary.`;
       }
     }
 
+    // For detailed adjust targeting a single day, return adjustedDay
+    if (isDetailedAdjust && detailedAdjustDayNumber && itineraryData.days?.length > 0) {
+      const adjustedDay = itineraryData.days.find((d: any) => d.day === detailedAdjustDayNumber) || itineraryData.days[0];
+      // Force correct day number
+      adjustedDay.day = detailedAdjustDayNumber;
+      return new Response(JSON.stringify({ adjustedDay, hotel: itineraryData.hotel }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify(itineraryData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
