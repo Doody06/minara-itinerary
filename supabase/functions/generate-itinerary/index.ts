@@ -115,6 +115,42 @@ Please modify the itinerary based on the adjustment request. Keep the same struc
 - "Less Walking" → Group items closer together, add more transport/rest stops`;
     }
 
+    // --- DETAILED ADJUST: only regenerate a specific day or item ---
+    const isDetailedAdjust = !!detailedAdjust;
+    let detailedAdjustDayNumber: number | undefined;
+
+    if (isDetailedAdjust) {
+      const { instruction, targetDayNumber, targetItemId, targetDay } = detailedAdjust;
+      detailedAdjustDayNumber = targetDayNumber;
+
+      if (targetDayNumber && targetDay) {
+        const targetItemTitle = targetItemId
+          ? targetDay.items?.find((i: any) => i.id === targetItemId)?.title
+          : undefined;
+
+        userPrompt = `DETAILED ADJUSTMENT for Day ${targetDayNumber} of a ${days}-day trip to ${destination}.
+
+Travel dates: ${startDate} to ${endDate}
+Traveler type: ${travelerType}
+Budget: $${budget}
+Interests: ${interests?.join(", ") || "General sightseeing"}
+Halal preferences: ${halalPreferences?.join(", ") || "Standard halal"}
+Pace: ${pace}
+
+Here is the CURRENT Day ${targetDayNumber} plan:
+${JSON.stringify(targetDay, null, 2)}
+
+USER'S SPECIFIC CHANGE REQUEST: "${instruction}"
+${targetItemId && targetItemTitle ? `This change is specifically about the item "${targetItemTitle}" (id: ${targetItemId}). Only modify this specific item and adjust surrounding times if needed. Keep all other items the same.` : `Apply this change to Day ${targetDayNumber} only. Keep the same day structure but modify as requested.`}
+
+IMPORTANT: Return ONLY Day ${targetDayNumber} with the modifications applied. Keep the day number as ${targetDayNumber}. Maintain the same ID format.`;
+      } else {
+        // No specific day targeted — adjust the full itinerary
+        userPrompt += `\n\nDETAILED ADJUSTMENT REQUEST: "${instruction}"
+Please apply this change across the entire itinerary.`;
+      }
+    }
+
     // Call Lovable AI Gateway with tool calling for structured output
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
