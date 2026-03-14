@@ -45,6 +45,7 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
   const [itinerary, setItinerary] = useState<DayPlan[] | null>(null);
   const [hotel, setHotel] = useState<HotelSuggestion | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDetailedAdjusting, setIsDetailedAdjusting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const callGenerateFunction = async (
