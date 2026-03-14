@@ -1,9 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HalalBadge } from "@/components/HalalBadge";
 import { MapPin, Clock, DollarSign, Utensils, Landmark, Bus, Hotel, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -100,13 +95,11 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
           )}
 
           {/* Open in Google Maps button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full gap-2"
-            onClick={() => window.open(getGoogleMapsUrl(item.title, destination), "_blank")}
-          >
-            <ExternalLink className="w-4 h-4" /> Open in Google Maps
+          <Button variant="outline" size="sm" className="w-full gap-2" asChild>
+            <a href={getGoogleMapsUrl(item.title, destination)} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="w-4 h-4" />
+              Open in Google Maps
+            </a>
           </Button>
         </div>
       </DialogContent>
