@@ -212,6 +212,15 @@ export default function ItineraryPage() {
           </div>
         </div>
       )}
+      {isDetailedAdjusting && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-card rounded-2xl border border-border p-8 max-w-md text-center shadow-xl">
+            <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+            <h3 className="text-lg font-display font-bold mb-1">Applying Your Changes</h3>
+            <p className="text-muted-foreground text-sm">Only updating the targeted section...</p>
+          </div>
+        </div>
+      )}
 
       <div className="container mx-auto px-4">
         {/* Header */}
