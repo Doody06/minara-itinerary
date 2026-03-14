@@ -155,7 +155,7 @@ function ItemCard({
 
 export default function ItineraryPage() {
   const navigate = useNavigate();
-  const { itinerary, hotel, isGenerating, quickAdjust, regenerate, preferences } = useItinerary();
+  const { itinerary, hotel, isGenerating, isDetailedAdjusting, quickAdjust, detailedAdjust, regenerate, preferences } = useItinerary();
   const [activeDay, setActiveDay] = useState(0);
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
 
