@@ -11,6 +11,19 @@ const typeLabels: Record<string, { label: string; icon: React.ElementType }> = {
   transport: { label: "Transport", icon: Bus },
   hotel: { label: "Hotel / Accommodation", icon: Hotel },
 };
+const mapsUrl = getGoogleMapsUrl(item.title, destination);
+
+function openMaps(url: string) {
+  // Attempt a new tab first (preferred UX)
+  const popup = window.open(url, "_blank", "noopener,noreferrer");
+
+  // If popups/new tabs are blocked (common in embedded previews),
+  // try top-level navigation.
+  if (!popup) {
+    // You can set location of window.top without reading its properties.
+    window.top?.location.assign(url);
+  }
+}
 
 function getMapEmbedUrl(title: string, destination?: string): string {
   const query = encodeURIComponent(`${title}${destination ? ` ${destination}` : ""}`);
@@ -42,7 +55,7 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
         <div className="relative h-52 w-full bg-muted overflow-hidden">
           <iframe
             src={getMapEmbedUrl(item.title, destination)}
-            className="w-full h-full border-0"
+            className="w-full h-full border-0 pointer-events-none"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             title={`Map of ${item.title}`}
@@ -95,16 +108,15 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
           )}
 
           {/* Open in Google Maps button */}
-          <a
-            href={getGoogleMapsUrl(item.title, destination)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openMaps(mapsUrl);
+            }}
           >
-            <ExternalLink className="w-4 h-4" />
             Open in Google Maps
-          </a>
+          </button>
         </div>
       </DialogContent>
     </Dialog>
