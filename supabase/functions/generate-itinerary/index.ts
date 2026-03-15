@@ -225,6 +225,7 @@ Please apply this change across the entire itinerary.`;
                                 "description",
                                 "type",
                                 "badges",
+                                "cost",
                               ],
                               additionalProperties: false,
                             },
