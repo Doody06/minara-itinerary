@@ -110,11 +110,15 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
 
           {/* Open in Google Maps button */}
           <a
-            href={getGoogleMapsUrl(item.title, destination)}
+            href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              openMaps(mapsUrl);
+            }}
           >
             <ExternalLink className="w-4 h-4" />
             Open in Google Maps
