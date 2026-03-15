@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HalalBadge } from "@/components/HalalBadge";
 import { MapPin, Clock, DollarSign, Utensils, Landmark, Bus, Hotel, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import type { ItineraryItem } from "@/data/dummyData";
 
 const typeLabels: Record<string, { label: string; icon: React.ElementType }> = {
