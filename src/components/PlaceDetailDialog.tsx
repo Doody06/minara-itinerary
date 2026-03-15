@@ -46,6 +46,7 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
   if (!item) return null;
 
   const typeInfo = typeLabels[item.type] || typeLabels.activity;
+  const mapsUrl = getGoogleMapsUrl(item.title, destination);
   const TypeIcon = typeInfo.icon;
 
   return (
