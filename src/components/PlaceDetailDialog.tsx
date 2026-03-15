@@ -11,7 +11,7 @@ const typeLabels: Record<string, { label: string; icon: React.ElementType }> = {
   transport: { label: "Transport", icon: Bus },
   hotel: { label: "Hotel / Accommodation", icon: Hotel },
 };
-const mapsUrl = getGoogleMapsUrl(item.title, destination);
+
 
 function openMaps(url: string) {
   // Attempt a new tab first (preferred UX)
