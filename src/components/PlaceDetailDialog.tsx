@@ -12,7 +12,6 @@ const typeLabels: Record<string, { label: string; icon: React.ElementType }> = {
   hotel: { label: "Hotel / Accommodation", icon: Hotel },
 };
 
-
 function openMaps(url: string) {
   // Attempt a new tab first (preferred UX)
   const popup = window.open(url, "_blank", "noopener,noreferrer");
@@ -114,11 +113,6 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              openMaps(mapsUrl);
-            }}
           >
             <ExternalLink className="w-4 h-4" />
             Open in Google Maps
