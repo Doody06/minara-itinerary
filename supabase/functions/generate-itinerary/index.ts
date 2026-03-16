@@ -253,7 +253,7 @@ Please apply this change across the entire itinerary.`;
                           ],
                         },
                         confidenceScore: { type: "number" },
-                        priceRange: { type: "string" },
+                        priceRange: { type: "string", description: "Actual nightly price estimate in USD, e.g. '$80-120/night'. NEVER use dollar signs like '$$$' or 'moderate'. Always give a numeric range." },
                       },
                       required: [
                         "name",
