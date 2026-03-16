@@ -52,7 +52,7 @@ function DetailedAdjustInput({
         disabled={disabled}
       >
         <PenLine className="w-3.5 h-3.5" />
-        {open ? "Cancel" : "Detailed adjust"}
+        {open ? "Cancel" : "Edit this place"}
         {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
       {open && (
