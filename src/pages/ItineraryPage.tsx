@@ -52,7 +52,7 @@ function DetailedAdjustInput({
         disabled={disabled}
       >
         <PenLine className="w-3.5 h-3.5" />
-        {open ? "Cancel" : "Detailed adjust"}
+        {open ? "Cancel" : "Edit this place"}
         {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
       {open && (
@@ -290,14 +290,6 @@ export default function ItineraryPage() {
                 </h3>
               </div>
 
-              {/* Day-level detailed adjust */}
-              <div className="mb-4">
-                <DetailedAdjustInput
-                  placeholder={`e.g. "Add a mosque visit in the morning" or "Make this day more relaxed"`}
-                  onSubmit={(text) => handleDayDetailedAdjust(text)}
-                  disabled={isDetailedAdjusting || isGenerating}
-                />
-              </div>
 
               <div className="space-y-3">
                 {currentItinerary[activeDay]?.items.map((item) => (
