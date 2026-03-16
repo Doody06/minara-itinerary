@@ -87,6 +87,7 @@ RULES:
 9. Include relevant badges from: halal-certified, muslim-friendly, no-alcohol, prayer-nearby, family-friendly, kid-friendly, budget-fit, verified.
 10. Give each item a unique id like "day-itemnum" (e.g., "1-1", "1-2", "2-1").
 11. Include a cost estimate for EVERY item (e.g. "$5-10", "$15-25", "Free", "$0"). Use realistic price ranges based on the destination. Always provide a cost string — use "Free" for mosques/parks/public spaces.
+15. For the suggested hotel, ALWAYS provide an actual numeric nightly price estimate in USD (e.g. "$80-120/night", "$200-350/night"). NEVER use vague symbols like "$$$", "$$", "moderate", or "luxury". Research and estimate the real nightly rate for that specific hotel.
 12. For items from the database, use their confidence_score and halal_status. Add an explanation for why this place was chosen.
 13. Each day needs a descriptive title mentioning the area/theme.
 14. CRITICAL: You MUST generate EXACTLY ${days} days. Every single day from Day 1 to Day ${days} must be present. Do NOT skip, shorten, or truncate. Generate ALL days in a single response.
