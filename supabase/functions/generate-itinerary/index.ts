@@ -454,8 +454,8 @@ async function learnNewPlaces(
       name: h.name, description: h.description, destination,
       area: h.area || null, halal_status: h.halal_status || "needs-check",
       badges: h.badges || [], tags: h.tags || [],
-      confidence_score: h.confidence_score || 60,
-      price_range: h.price_range || null, star_rating: h.star_rating || null,
+      confidence_score: Math.round(Number(h.confidence_score) || 60),
+      price_range: h.price_range || null, star_rating: h.star_rating ? Math.round(Number(h.star_rating)) : null,
     }));
     const { error } = await supabaseAdmin.from("hotels").upsert(hotelsToInsert, { onConflict: "name,destination", ignoreDuplicates: true });
     if (error) console.error("Failed to insert hotels:", error);
