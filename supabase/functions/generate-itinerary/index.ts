@@ -440,7 +440,7 @@ async function learnNewPlaces(
       name: p.name, description: p.description, type: p.type, destination,
       area: p.area || null, halal_status: p.halal_status || "needs-check",
       badges: p.badges || [], tags: p.tags || [],
-      confidence_score: p.confidence_score || 60,
+      confidence_score: Math.round(Number(p.confidence_score) || 60),
       cost_range: p.cost_range || null,
       latitude: p.latitude || null, longitude: p.longitude || null,
     }));
