@@ -82,8 +82,10 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
 
       clearTimeout(timeoutId);
 
+      // supabase.functions.invoke returns fnError for non-2xx but data may contain the real message
       if (fnError) {
-        throw new Error(fnError.message || "Failed to generate itinerary");
+        const errorMsg = data?.error || fnError.message || "Failed to generate itinerary";
+        throw new Error(errorMsg);
       }
 
       if (data?.error) {
