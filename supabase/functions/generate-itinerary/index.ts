@@ -261,9 +261,9 @@ Apply across entire itinerary.`;
       },
     };
 
-    // Call AI with retry
+    // Call AI with retry - use fast model for speed
     const result = await callAIWithRetry(aiUrl, aiHeaders, {
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-3-flash-preview",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
