@@ -361,9 +361,9 @@ async function learnNewPlaces(
     method: "POST",
     headers: aiHeaders,
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-flash-lite",
       messages: [
-        { role: "system", content: "You are a travel research assistant. Provide accurate details for each place/hotel including description, area, halal status, tags, cost range, and GPS coordinates. Be factual and concise." },
+        { role: "system", content: "Research assistant. Provide concise details for each place/hotel: description, area, halal status, tags, cost range, GPS. Be factual." },
         { role: "user", content: `Research these places/hotels in ${destination}:\n${researchItems.join("\n")}` },
       ],
       tools: [{
