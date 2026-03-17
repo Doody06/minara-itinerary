@@ -8,7 +8,7 @@ import type { ItineraryItem } from "@/data/dummyData";
 import {
   Utensils, MapPin, RotateCcw, ArrowLeft, ChevronDown, ChevronUp,
   Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2,
-  PenLine, Send
+  PenLine, Send, ExternalLink
 } from "lucide-react";
 import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
 
