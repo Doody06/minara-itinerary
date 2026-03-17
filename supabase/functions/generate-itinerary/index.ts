@@ -261,9 +261,9 @@ Apply across entire itinerary.`;
       },
     };
 
-    // Call AI with retry
+    // Call AI with retry - use fast model for speed
     const result = await callAIWithRetry(aiUrl, aiHeaders, {
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-3-flash-preview",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -361,9 +361,9 @@ async function learnNewPlaces(
     method: "POST",
     headers: aiHeaders,
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-flash-lite",
       messages: [
-        { role: "system", content: "You are a travel research assistant. Provide accurate details for each place/hotel including description, area, halal status, tags, cost range, and GPS coordinates. Be factual and concise." },
+        { role: "system", content: "Research assistant. Provide concise details for each place/hotel: description, area, halal status, tags, cost range, GPS. Be factual." },
         { role: "user", content: `Research these places/hotels in ${destination}:\n${researchItems.join("\n")}` },
       ],
       tools: [{
@@ -440,7 +440,7 @@ async function learnNewPlaces(
       name: p.name, description: p.description, type: p.type, destination,
       area: p.area || null, halal_status: p.halal_status || "needs-check",
       badges: p.badges || [], tags: p.tags || [],
-      confidence_score: p.confidence_score || 60,
+      confidence_score: Math.round(Number(p.confidence_score) || 60),
       cost_range: p.cost_range || null,
       latitude: p.latitude || null, longitude: p.longitude || null,
     }));
@@ -454,8 +454,8 @@ async function learnNewPlaces(
       name: h.name, description: h.description, destination,
       area: h.area || null, halal_status: h.halal_status || "needs-check",
       badges: h.badges || [], tags: h.tags || [],
-      confidence_score: h.confidence_score || 60,
-      price_range: h.price_range || null, star_rating: h.star_rating || null,
+      confidence_score: Math.round(Number(h.confidence_score) || 60),
+      price_range: h.price_range || null, star_rating: h.star_rating ? Math.round(Number(h.star_rating)) : null,
     }));
     const { error } = await supabaseAdmin.from("hotels").upsert(hotelsToInsert, { onConflict: "name,destination", ignoreDuplicates: true });
     if (error) console.error("Failed to insert hotels:", error);
