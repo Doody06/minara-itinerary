@@ -11,6 +11,7 @@ import {
   PenLine, Send, ExternalLink
 } from "lucide-react";
 import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
+import { HotelDetailDialog } from "@/components/HotelDetailDialog";
 
 const typeIcons: Record<string, React.ElementType> = {
   food: Utensils,
