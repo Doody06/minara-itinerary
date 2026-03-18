@@ -159,6 +159,7 @@ export default function ItineraryPage() {
   const { itinerary, hotel, isGenerating, isDetailedAdjusting, quickAdjust, detailedAdjust, regenerate, preferences } = useItinerary();
   const [activeDay, setActiveDay] = useState(0);
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
+  const [hotelDialogOpen, setHotelDialogOpen] = useState(false);
 
 
   // If no itinerary, redirect to plan
