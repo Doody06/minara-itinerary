@@ -11,6 +11,7 @@ import {
   PenLine, Send, ExternalLink
 } from "lucide-react";
 import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
+import { HotelDetailDialog } from "@/components/HotelDetailDialog";
 
 const typeIcons: Record<string, React.ElementType> = {
   food: Utensils,
@@ -158,6 +159,7 @@ export default function ItineraryPage() {
   const { itinerary, hotel, isGenerating, isDetailedAdjusting, quickAdjust, detailedAdjust, regenerate, preferences } = useItinerary();
   const [activeDay, setActiveDay] = useState(0);
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
+  const [hotelDialogOpen, setHotelDialogOpen] = useState(false);
 
 
   // If no itinerary, redirect to plan
@@ -315,12 +317,15 @@ export default function ItineraryPage() {
             <div className="space-y-4">
               {/* Hotel */}
               {hotel && (
-                <div className="bg-card rounded-xl border border-border p-5">
+                <div
+                  className="bg-card rounded-xl border border-border p-5 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer"
+                  onClick={() => setHotelDialogOpen(true)}
+                >
                   <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
                     <Hotel className="w-5 h-5 text-primary" /> Suggested Hotel
                   </h3>
                   <h4 className="font-semibold">{hotel.name}</h4>
-                  <p className="text-sm text-muted-foreground mt-1">{hotel.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{hotel.description}</p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {hotel.badges.map((b) => <HalalBadge key={b} badge={b} />)}
                   </div>
@@ -330,6 +335,12 @@ export default function ItineraryPage() {
                   </div>
                 </div>
               )}
+              <HotelDetailDialog
+                hotel={hotel}
+                open={hotelDialogOpen}
+                onOpenChange={setHotelDialogOpen}
+                destination={preferences?.destination}
+              />
 
               {/* Prayer Times */}
               <div className="bg-card rounded-xl border border-border p-5">
