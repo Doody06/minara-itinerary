@@ -24,12 +24,18 @@ function openMaps(url: string) {
   }
 }
 
-function getMapEmbedUrl(title: string, destination?: string): string {
+function getMapEmbedUrl(title: string, destination?: string, lat?: number, lng?: number): string {
+  if (lat && lng) {
+    return `https://www.google.com/maps?q=${lat},${lng}&output=embed`;
+  }
   const query = encodeURIComponent(`${title}${destination ? ` ${destination}` : ""}`);
   return `https://www.google.com/maps?q=${query}&output=embed`;
 }
 
-function getGoogleMapsUrl(title: string, destination?: string): string {
+function getGoogleMapsUrl(title: string, destination?: string, lat?: number, lng?: number): string {
+  if (lat && lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  }
   const query = encodeURIComponent(`${title}${destination ? ` ${destination}` : ""}`);
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
