@@ -90,7 +90,7 @@ function ItemCard({
   onDetailedAdjust: (instruction: string, itemId: string) => void;
   isAdjusting: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  
   const Icon = typeIcons[item.type] || Landmark;
 
   return (
@@ -125,20 +125,10 @@ function ItemCard({
           <div className="flex flex-wrap gap-1.5 mt-2">
             {item.badges.map((b) => <HalalBadge key={b} badge={b} />)}
           </div>
-          {(item.confidenceScore || item.explanation) && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className="flex items-center gap-1 text-xs text-primary mt-2 hover:underline"
-            >
-              <Info className="w-3 h-3" />
-              {expanded ? "Hide details" : "Why this was chosen"}
-              {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            </button>
-          )}
-          {expanded && (
-            <div className="mt-2 p-3 bg-muted rounded-lg text-sm space-y-2 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-              {item.confidenceScore && <ConfidenceIndicator score={item.confidenceScore} />}
-              {item.explanation && <p className="text-muted-foreground">{item.explanation}</p>}
+          {item.confidenceScore && item.confidenceScore < 70 && item.explanation && (
+            <div className="mt-2 p-3 bg-muted rounded-lg text-sm space-y-2">
+              <ConfidenceIndicator score={item.confidenceScore} />
+              <p className="text-muted-foreground">{item.explanation}</p>
             </div>
           )}
           <div className="mt-2" onClick={(e) => e.stopPropagation()}>

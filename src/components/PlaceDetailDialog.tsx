@@ -99,10 +99,10 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
             </div>
           )}
 
-          {/* Explanation */}
-          {item.explanation && (
+          {/* Low confidence note */}
+          {item.confidenceScore && item.confidenceScore < 70 && item.explanation && (
             <div className="bg-muted rounded-lg p-3 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Why this was chosen: </span>
+              <span className="font-medium text-foreground">Note: </span>
               {item.explanation}
             </div>
           )}
