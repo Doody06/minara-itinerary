@@ -90,7 +90,7 @@ function ItemCard({
   onDetailedAdjust: (instruction: string, itemId: string) => void;
   isAdjusting: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  
   const Icon = typeIcons[item.type] || Landmark;
 
   return (
