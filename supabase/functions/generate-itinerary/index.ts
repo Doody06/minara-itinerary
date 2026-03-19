@@ -7,6 +7,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Strip stray non-ASCII characters (CJK, etc.) that the model occasionally injects
+function sanitizeStrings(obj: any): any {
+  if (typeof obj === "string") {
+    // Keep basic Latin, common punctuation, currency symbols — remove CJK and other stray unicode
+    return obj.replace(/[^\x00-\x7F\u00A0-\u00FF\u20AC\u00A3\u00A5]/g, "").trim();
+  }
+  if (Array.isArray(obj)) return obj.map(sanitizeStrings);
+  if (obj && typeof obj === "object") {
+    const out: any = {};
+    for (const [k, v] of Object.entries(obj)) out[k] = sanitizeStrings(v);
+    return out;
+  }
+  return obj;
+}
+
 // Helper: call AI gateway with retry
 async function callAIWithRetry(
   url: string,
@@ -139,7 +154,6 @@ serve(async (req) => {
     }
 
     const systemPrompt = `You are MINARA, an AI halal travel itinerary planner for Muslim travelers.
-CRITICAL: ALL output MUST be in plain English only. Never use Chinese, Japanese, Arabic, or any non-ASCII characters.
 ${dbSection}
 RULES:
 1. ${hasDbData ? "Prefer places from the database above (verified halal info)." : "You have no pre-verified data for this destination. Use your knowledge to suggest halal-friendly places and mark confidence_score 60-70 and halal_status as 'needs-check' for unverified ones."}
@@ -155,7 +169,7 @@ RULES:
 11. For DB items use their confidence_score/halal_status. Add brief explanation.
 12. Each day needs a descriptive title mentioning area/theme.
 13. CRITICAL: Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.
-14. Keep descriptions concise (1-2 sentences). English only, no special unicode characters.`;
+14. Keep descriptions concise (1-2 sentences).`;
 
     let userPrompt = `Create a COMPLETE ${days}-day itinerary for ${destination}. Generate exactly ${days} days.
 
@@ -286,7 +300,7 @@ Apply across entire itinerary.`;
       );
     }
 
-    const itineraryData = result.data;
+    const itineraryData = sanitizeStrings(result.data);
 
     // For detailed adjust targeting a single day, return immediately
     if (isDetailedAdjust && detailedAdjustDayNumber && itineraryData.days?.length > 0) {
