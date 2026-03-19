@@ -141,7 +141,8 @@ serve(async (req) => {
       // Only send essential fields to reduce prompt size
       const slimPlaces = places.map((p: any) => ({
         name: p.name, type: p.type, area: p.area, halal_status: p.halal_status, 
-        badges: p.badges, cost_range: p.cost_range, confidence_score: p.confidence_score
+        badges: p.badges, cost_range: p.cost_range, confidence_score: p.confidence_score,
+        latitude: p.latitude, longitude: p.longitude
       }));
       dbSection += `\nAVAILABLE PLACES DATABASE (prefer these, verified halal info):\n${JSON.stringify(slimPlaces)}\n`;
     }
