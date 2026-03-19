@@ -10,6 +10,8 @@ const mockItem: ItineraryItem = {
   description: "Historic mosque in Istanbul",
   type: "activity",
   badges: ["verified"],
+  latitude: 41.0054,
+  longitude: 28.9768,
 };
 
 afterEach(() => {
