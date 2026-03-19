@@ -7,6 +7,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Strip stray non-ASCII characters (CJK, etc.) that the model occasionally injects
+function sanitizeStrings(obj: any): any {
+  if (typeof obj === "string") {
+    // Keep basic Latin, common punctuation, currency symbols — remove CJK and other stray unicode
+    return obj.replace(/[^\x00-\x7F\u00A0-\u00FF\u20AC\u00A3\u00A5]/g, "").trim();
+  }
+  if (Array.isArray(obj)) return obj.map(sanitizeStrings);
+  if (obj && typeof obj === "object") {
+    const out: any = {};
+    for (const [k, v] of Object.entries(obj)) out[k] = sanitizeStrings(v);
+    return out;
+  }
+  return obj;
+}
+
 // Helper: call AI gateway with retry
 async function callAIWithRetry(
   url: string,
