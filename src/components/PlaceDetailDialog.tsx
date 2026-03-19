@@ -32,11 +32,10 @@ function getMapEmbedUrl(title: string, destination?: string, lat?: number, lng?:
   return `https://www.google.com/maps?q=${query}&output=embed`;
 }
 
-function getGoogleMapsUrl(title: string, destination?: string, lat?: number, lng?: number): string {
-  if (lat && lng) {
-    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-  }
-  const query = encodeURIComponent(`${title}${destination ? ` ${destination}` : ""}`);
+function getGoogleMapsUrl(title: string, destination?: string): string {
+  // Always use the place name so Google Maps resolves to the actual place listing
+  // (with reviews, photos, address, hours) instead of just a coordinate pin.
+  const query = encodeURIComponent(`${title}${destination ? `, ${destination}` : ""}`);
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
@@ -51,7 +50,7 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
   if (!item) return null;
 
   const typeInfo = typeLabels[item.type] || typeLabels.activity;
-  const mapsUrl = getGoogleMapsUrl(item.title, destination, item.latitude, item.longitude);
+  const mapsUrl = getGoogleMapsUrl(item.title, destination);
   const TypeIcon = typeInfo.icon;
 
   return (
