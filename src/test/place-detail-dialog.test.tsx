@@ -40,7 +40,7 @@ describe("PlaceDetailDialog Google Maps link", () => {
     fireEvent.click(mapsLink);
 
     expect(openSpy).toHaveBeenCalledWith(
-      expect.stringContaining("https://www.google.com/maps/search/?api=1&query="),
+      expect.stringContaining("https://www.google.com/maps/search/?api=1&query=41.0054,28.9768"),
       "_blank",
       "noopener,noreferrer"
     );
