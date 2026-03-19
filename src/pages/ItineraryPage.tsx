@@ -229,7 +229,19 @@ export default function ItineraryPage() {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-1"><Share2 className="w-4 h-4" /> Share</Button>
-            <Button variant="outline" size="sm" className="gap-1"><Download className="w-4 h-4" /> Export</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={() => {
+                if (currentItinerary.length && preferences) {
+                  exportItineraryPdf(currentItinerary, preferences, hotel);
+                }
+              }}
+              disabled={!currentItinerary.length}
+            >
+              <Download className="w-4 h-4" /> Export
+            </Button>
             <Button
               size="sm"
               className="gap-1 bg-primary text-primary-foreground"
