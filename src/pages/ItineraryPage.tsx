@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { exportItineraryPdf } from "@/lib/exportItineraryPdf";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
