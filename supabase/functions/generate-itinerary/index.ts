@@ -300,7 +300,7 @@ Apply across entire itinerary.`;
       );
     }
 
-    const itineraryData = result.data;
+    const itineraryData = sanitizeStrings(result.data);
 
     // For detailed adjust targeting a single day, return immediately
     if (isDetailedAdjust && detailedAdjustDayNumber && itineraryData.days?.length > 0) {
