@@ -12,6 +12,8 @@ export interface ItineraryItem {
   confidenceScore?: number;
   explanation?: string;
   cost?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface DayPlan {

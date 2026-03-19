@@ -60,7 +60,7 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
         {/* Embedded Google Map */}
         <div className="relative h-52 w-full bg-muted overflow-hidden">
           <iframe
-            src={getMapEmbedUrl(item.title, destination)}
+            src={getMapEmbedUrl(item.title, destination, item.latitude, item.longitude)}
             className="w-full h-full border-0 pointer-events-none"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
