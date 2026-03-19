@@ -2,6 +2,12 @@ import jsPDF from "jspdf";
 import type { DayPlan } from "@/data/dummyData";
 import type { TripPreferences, HotelSuggestion } from "@/lib/itineraryContext";
 
+// Strip characters outside jsPDF's WinAnsi/CP1252 range to prevent garbled rendering
+function sanitize(text: string): string {
+  // Keep printable ASCII + common Latin-1 Supplement (accented chars, currency symbols)
+  return text.replace(/[^\x20-\x7E\u00A0-\u00FF]/g, "").trim();
+}
+
 export function exportItineraryPdf(
   itinerary: DayPlan[],
   preferences: TripPreferences,
