@@ -63,16 +63,16 @@ export function exportItineraryPdf(
   doc.setFont("helvetica", "normal");
   setColor(muted);
   const details = [
-    ["Dates", `${preferences.startDate} → ${preferences.endDate}`],
+    ["Dates", `${preferences.startDate} - ${preferences.endDate}`],
     ["Travelers", preferences.travelerType],
     ["Budget", `$${preferences.budget.toLocaleString()}`],
     ["Pace", preferences.pace],
     ["Interests", preferences.selectedInterests.join(", ")],
   ];
   for (const [label, value] of details) {
-    doc.text(`${label}:`, marginX, y);
+    doc.text(sanitize(`${label}:`), marginX, y);
     setColor(dark);
-    doc.text(value, marginX + 30, y);
+    doc.text(sanitize(value), marginX + 30, y);
     setColor(muted);
     y += 6;
   }
@@ -86,17 +86,17 @@ export function exportItineraryPdf(
     doc.text("Suggested Hotel", marginX, y);
     y += 8;
     doc.setFontSize(11);
-    doc.text(hotel.name, marginX, y);
+    doc.text(sanitize(hotel.name), marginX, y);
     y += 5;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     setColor(muted);
-    const hotelDesc = doc.splitTextToSize(hotel.description, contentW);
+    const hotelDesc = doc.splitTextToSize(sanitize(hotel.description), contentW);
     doc.text(hotelDesc.slice(0, 3), marginX, y);
     y += hotelDesc.slice(0, 3).length * 4 + 2;
     setColor(gold as unknown as readonly [number, number, number]);
     doc.setFont("helvetica", "bold");
-    doc.text(hotel.priceRange, marginX, y);
+    doc.text(sanitize(hotel.priceRange), marginX, y);
   }
 
   // ── One page per day ──
@@ -110,35 +110,34 @@ export function exportItineraryPdf(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(255, 255, 255);
-    doc.text(`Day ${day.day}: ${day.title}`, marginX + 5, y + 3);
+    doc.text(sanitize(`Day ${day.day}: ${day.title}`), marginX + 5, y + 3);
     y += 16;
 
     for (const item of day.items) {
-      // Check if we're too close to bottom — shouldn't happen per requirement but safety
       if (y > pageH - 20) break;
 
       // Time + Type tag
       setColor(emerald as unknown as readonly [number, number, number]);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
-      doc.text(item.time, marginX, y);
+      doc.text(sanitize(item.time), marginX, y);
 
       const typeLabel = item.type.charAt(0).toUpperCase() + item.type.slice(1);
       doc.setFontSize(7);
       setColor(muted);
-      doc.text(`[${typeLabel}]`, marginX + 22, y);
+      doc.text(sanitize(`[${typeLabel}]`), marginX + 22, y);
 
       // Title
       setColor(dark);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.text(item.title, marginX + 40, y);
+      doc.text(sanitize(item.title), marginX + 40, y);
 
       // Cost on right
       if (item.cost) {
         setColor(gold as unknown as readonly [number, number, number]);
         doc.setFontSize(9);
-        doc.text(item.cost, pageW - marginX, y, { align: "right" });
+        doc.text(sanitize(item.cost), pageW - marginX, y, { align: "right" });
       }
 
       y += 5;
@@ -147,7 +146,7 @@ export function exportItineraryPdf(
       setColor(muted);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
-      const desc = doc.splitTextToSize(item.description, contentW - 42);
+      const desc = doc.splitTextToSize(sanitize(item.description), contentW - 42);
       doc.text(desc.slice(0, 2), marginX + 40, y);
       y += desc.slice(0, 2).length * 3.5;
 
@@ -155,7 +154,7 @@ export function exportItineraryPdf(
       if (item.badges.length > 0) {
         doc.setFontSize(7);
         setColor(emerald as unknown as readonly [number, number, number]);
-        doc.text(item.badges.join("  ·  "), marginX + 40, y + 1);
+        doc.text(sanitize(item.badges.join("  ·  ")), marginX + 40, y + 1);
         y += 4;
       }
 
@@ -169,7 +168,7 @@ export function exportItineraryPdf(
     // Footer
     doc.setFontSize(7);
     setColor(muted);
-    doc.text(`HalalTrip Planner — Day ${day.day} of ${itinerary.length}`, pageW / 2, pageH - 10, {
+    doc.text(sanitize(`HalalTrip Planner - Day ${day.day} of ${itinerary.length}`), pageW / 2, pageH - 10, {
       align: "center",
     });
   }
