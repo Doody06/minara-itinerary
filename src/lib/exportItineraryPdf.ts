@@ -41,12 +41,12 @@ export function exportItineraryPdf(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(28);
   doc.setTextColor(255, 255, 255);
-  doc.text(`${destination} Itinerary`, marginX, 35);
+  doc.text(sanitize(`${destination} Itinerary`), marginX, 35);
 
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
   doc.text(
-    `${itinerary.length}-day halal-friendly ${preferences.travelerType} trip · ${preferences.pace} pace`,
+    sanitize(`${itinerary.length}-day halal-friendly ${preferences.travelerType} trip · ${preferences.pace} pace`),
     marginX,
     48
   );
