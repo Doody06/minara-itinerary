@@ -141,7 +141,8 @@ serve(async (req) => {
       // Only send essential fields to reduce prompt size
       const slimPlaces = places.map((p: any) => ({
         name: p.name, type: p.type, area: p.area, halal_status: p.halal_status, 
-        badges: p.badges, cost_range: p.cost_range, confidence_score: p.confidence_score
+        badges: p.badges, cost_range: p.cost_range, confidence_score: p.confidence_score,
+        latitude: p.latitude, longitude: p.longitude
       }));
       dbSection += `\nAVAILABLE PLACES DATABASE (prefer these, verified halal info):\n${JSON.stringify(slimPlaces)}\n`;
     }
@@ -169,7 +170,8 @@ RULES:
 11. For DB items use their confidence_score/halal_status. Add brief explanation.
 12. Each day needs a descriptive title mentioning area/theme.
 13. CRITICAL: Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.
-14. Keep descriptions concise (1-2 sentences).`;
+14. Keep descriptions concise (1-2 sentences).
+15. IMPORTANT: For EVERY item, provide latitude and longitude coordinates for the EXACT location. Use precise coordinates from the database when available. For places not in the database, use your knowledge to provide accurate GPS coordinates. This is critical for Google Maps links.`;
 
     let userPrompt = `Create a COMPLETE ${days}-day itinerary for ${destination}. Generate exactly ${days} days.
 
@@ -246,8 +248,10 @@ Apply across entire itinerary.`;
                         confidenceScore: { type: "number" },
                         explanation: { type: "string" },
                         cost: { type: "string" },
+                        latitude: { type: "number", description: "Exact latitude coordinate of this place" },
+                        longitude: { type: "number", description: "Exact longitude coordinate of this place" },
                       },
-                      required: ["id", "time", "title", "description", "type", "badges", "cost"],
+                      required: ["id", "time", "title", "description", "type", "badges", "cost", "latitude", "longitude"],
                       additionalProperties: false,
                     },
                   },

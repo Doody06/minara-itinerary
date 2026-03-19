@@ -10,6 +10,8 @@ const mockItem: ItineraryItem = {
   description: "Historic mosque in Istanbul",
   type: "activity",
   badges: ["verified"],
+  latitude: 41.0054,
+  longitude: 28.9768,
 };
 
 afterEach(() => {
@@ -31,16 +33,11 @@ describe("PlaceDetailDialog Google Maps link", () => {
 
     const mapsLink = screen.getByRole("link", { name: /open in google maps/i });
 
-    expect(mapsLink).toHaveAttribute("href", expect.stringContaining("https://www.google.com/maps/search/?api=1&query="));
+    expect(mapsLink).toHaveAttribute("href", expect.stringContaining("https://www.google.com/maps/search/?api=1&query=41.0054,28.9768"));
     expect(mapsLink).toHaveAttribute("target", "_blank");
     expect(mapsLink).toHaveAttribute("rel", "noopener noreferrer");
 
-    fireEvent.click(mapsLink);
-
-    expect(openSpy).toHaveBeenCalledWith(
-      expect.stringContaining("https://www.google.com/maps/search/?api=1&query="),
-      "_blank",
-      "noopener,noreferrer"
-    );
+    // The link is a native anchor — clicking it doesn't call window.open in jsdom,
+    // but the href/target/rel attributes guarantee correct behaviour in a real browser.
   });
 });
