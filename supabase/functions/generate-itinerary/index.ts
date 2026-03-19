@@ -170,7 +170,8 @@ RULES:
 11. For DB items use their confidence_score/halal_status. Add brief explanation.
 12. Each day needs a descriptive title mentioning area/theme.
 13. CRITICAL: Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.
-14. Keep descriptions concise (1-2 sentences).`;
+14. Keep descriptions concise (1-2 sentences).
+15. IMPORTANT: For EVERY item, provide latitude and longitude coordinates for the EXACT location. Use precise coordinates from the database when available. For places not in the database, use your knowledge to provide accurate GPS coordinates. This is critical for Google Maps links.`;
 
     let userPrompt = `Create a COMPLETE ${days}-day itinerary for ${destination}. Generate exactly ${days} days.
 
