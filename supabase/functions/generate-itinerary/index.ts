@@ -139,7 +139,6 @@ serve(async (req) => {
     }
 
     const systemPrompt = `You are MINARA, an AI halal travel itinerary planner for Muslim travelers.
-CRITICAL: ALL output MUST be in plain English only. Never use Chinese, Japanese, Arabic, or any non-ASCII characters.
 ${dbSection}
 RULES:
 1. ${hasDbData ? "Prefer places from the database above (verified halal info)." : "You have no pre-verified data for this destination. Use your knowledge to suggest halal-friendly places and mark confidence_score 60-70 and halal_status as 'needs-check' for unverified ones."}
@@ -155,7 +154,7 @@ RULES:
 11. For DB items use their confidence_score/halal_status. Add brief explanation.
 12. Each day needs a descriptive title mentioning area/theme.
 13. CRITICAL: Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.
-14. Keep descriptions concise (1-2 sentences). English only, no special unicode characters.`;
+14. Keep descriptions concise (1-2 sentences).`;
 
     let userPrompt = `Create a COMPLETE ${days}-day itinerary for ${destination}. Generate exactly ${days} days.
 
