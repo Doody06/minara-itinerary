@@ -33,7 +33,7 @@ describe("PlaceDetailDialog Google Maps link", () => {
 
     const mapsLink = screen.getByRole("link", { name: /open in google maps/i });
 
-    expect(mapsLink).toHaveAttribute("href", expect.stringContaining("https://www.google.com/maps/search/?api=1&query="));
+    expect(mapsLink).toHaveAttribute("href", expect.stringContaining("https://www.google.com/maps/search/?api=1&query=41.0054,28.9768"));
     expect(mapsLink).toHaveAttribute("target", "_blank");
     expect(mapsLink).toHaveAttribute("rel", "noopener noreferrer");
 
