@@ -126,12 +126,6 @@ function ItemCard({
           <div className="flex flex-wrap gap-1.5 mt-2">
             {item.badges.map((b) => <HalalBadge key={b} badge={b} />)}
           </div>
-          {item.confidenceScore && item.confidenceScore < 70 && item.explanation && (
-            <div className="mt-2 p-3 bg-muted rounded-lg text-sm space-y-2">
-              <ConfidenceIndicator score={item.confidenceScore} />
-              <p className="text-muted-foreground">{item.explanation}</p>
-            </div>
-          )}
           <div className="mt-2" onClick={(e) => e.stopPropagation()}>
             <DetailedAdjustInput
               placeholder={`e.g. "Replace this with a cheaper option" or "Change to a halal-certified restaurant"`}
