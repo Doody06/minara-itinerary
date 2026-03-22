@@ -8,10 +8,13 @@ const corsHeaders = {
 };
 
 // Strip stray non-ASCII characters (CJK, etc.) that the model occasionally injects
+// Also strip leaked LLM artifacts like "}}finish_reason:" or field names leaking into values
 function sanitizeStrings(obj: any): any {
   if (typeof obj === "string") {
-    // Keep basic Latin, common punctuation, currency symbols — remove CJK and other stray unicode
-    return obj.replace(/[^\x00-\x7F\u00A0-\u00FF\u20AC\u00A3\u00A5]/g, "").trim();
+    return obj
+      .replace(/\}\}.*finish_reason.*$/gi, "")  // strip leaked LLM finish artifacts
+      .replace(/[^\x00-\x7F\u00A0-\u00FF\u20AC\u00A3\u00A5]/g, "")
+      .trim();
   }
   if (Array.isArray(obj)) return obj.map(sanitizeStrings);
   if (obj && typeof obj === "object") {
@@ -20,6 +23,21 @@ function sanitizeStrings(obj: any): any {
     return out;
   }
   return obj;
+}
+
+// Clean hotel price range to just "$X-Y/night" format
+function sanitizeHotel(hotel: any): any {
+  if (!hotel) return hotel;
+  // Clean name: remove any ",priceRange:" or similar field leaks
+  if (hotel.name) {
+    hotel.name = hotel.name.replace(/[,;]?\s*priceRange\s*:.*$/i, "").trim();
+  }
+  // Normalize priceRange to just "$X-Y/night"
+  if (hotel.priceRange) {
+    const match = hotel.priceRange.match(/\$?\s*(\d+)\s*[-–]\s*\$?\s*(\d+)/);
+    hotel.priceRange = match ? `$${match[1]}-${match[2]}/night` : hotel.priceRange;
+  }
+  return hotel;
 }
 
 // Helper: call AI gateway with retry
