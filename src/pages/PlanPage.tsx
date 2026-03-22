@@ -307,25 +307,7 @@ export default function PlanPage() {
           </div>
         </div>
 
-        {/* Loading overlay */}
-        {isGenerating && (
-          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-            <div className="bg-card rounded-2xl border border-border p-8 max-w-md text-center shadow-xl">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
-              </div>
-              <h3 className="text-xl font-display font-bold mb-2">Creating Your Itinerary</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                MINARA is searching our halal-verified database and crafting your personalized travel plan...
-              </p>
-              <div className="flex items-center justify-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
-            </div>
-          </div>
-        )}
+        {isGenerating && <GeneratingOverlay />}
       </div>
     </div>
   );
