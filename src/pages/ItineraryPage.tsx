@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { HalalBadge, ConfidenceIndicator } from "@/components/HalalBadge";
 import { useItinerary } from "@/lib/itineraryContext";
+import { PrayerTimesSidebar } from "@/components/PrayerTimesSidebar";
 import type { ItineraryItem } from "@/data/dummyData";
 import {
   Utensils, MapPin, RotateCcw, ArrowLeft, ChevronDown, ChevronUp,
@@ -346,25 +347,7 @@ export default function ItineraryPage() {
               />
 
               {/* Prayer Times */}
-              <div className="bg-card rounded-xl border border-border p-5">
-                <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-primary" /> Prayer Times ({destinationLabel})
-                </h3>
-                <div className="space-y-2 text-sm">
-                  {[
-                    { name: "Fajr", time: "5:48 AM" },
-                    { name: "Dhuhr", time: "1:08 PM" },
-                    { name: "Asr", time: "4:32 PM" },
-                    { name: "Maghrib", time: "6:51 PM" },
-                    { name: "Isha", time: "8:12 PM" },
-                  ].map((p) => (
-                    <div key={p.name} className="flex justify-between py-1.5 border-b border-border last:border-0">
-                      <span className="text-muted-foreground">{p.name}</span>
-                      <span className="font-medium">{p.time}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <PrayerTimesSidebar destination={preferences?.destination} date={preferences?.date} label={destinationLabel} />
 
               {/* Trip Summary */}
               <div className="bg-emerald-light rounded-xl p-5 border border-emerald/20">
