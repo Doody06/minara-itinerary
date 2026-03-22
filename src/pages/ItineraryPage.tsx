@@ -366,7 +366,7 @@ export default function ItineraryPage() {
               />
 
               {/* Prayer Times */}
-              <PrayerTimesSidebar destination={preferences?.destination} date={preferences?.date} label={destinationLabel} />
+              <PrayerTimesSidebar destination={preferences?.destination} date={preferences?.startDate} label={destinationLabel} />
 
               {/* Trip Summary */}
               <div className="bg-emerald-light rounded-xl p-5 border border-emerald/20">
