@@ -1,4 +1,5 @@
 import { useState } from "react";
+import GeneratingOverlay from "@/components/GeneratingOverlay";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useItinerary } from "@/lib/itineraryContext";
 import { Button } from "@/components/ui/button";
