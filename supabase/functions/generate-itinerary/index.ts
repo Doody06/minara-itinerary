@@ -323,6 +323,7 @@ Apply across entire itinerary.`;
     }
 
     const itineraryData = sanitizeStrings(result.data);
+    if (itineraryData.hotel) itineraryData.hotel = sanitizeHotel(itineraryData.hotel);
 
     // For detailed adjust targeting a single day, return immediately
     if (isDetailedAdjust && detailedAdjustDayNumber && itineraryData.days?.length > 0) {
