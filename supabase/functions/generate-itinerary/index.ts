@@ -167,7 +167,7 @@ RULES:
 8. Unique id per item: "day-itemnum" (e.g., "1-1", "2-3").
 9. Cost estimate for EVERY item (e.g. "$5-10", "Free"). Always provide a cost string.
 10. Hotel: ALWAYS provide numeric nightly price in USD (e.g. "$80-120/night"). NEVER use "$$$" or "moderate".
-11. For DB items use their confidence_score/halal_status. Add brief explanation.
+11. The "explanation" field is ONLY for items with confidenceScore below 70. For those, write a single clear English sentence explaining WHY the halal status is uncertain (e.g. "Could not verify halal certification; check with the restaurant directly."). For items with confidenceScore 70 or above, set explanation to an empty string "".
 12. Each day needs a descriptive title mentioning area/theme.
 13. CRITICAL: Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.
 14. Keep descriptions concise (1-2 sentences).
