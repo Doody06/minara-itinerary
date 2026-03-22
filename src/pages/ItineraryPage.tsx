@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { exportItineraryPdf } from "@/lib/exportItineraryPdf";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -228,7 +229,25 @@ export default function ItineraryPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1"><Share2 className="w-4 h-4" /> Share</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={async () => {
+                const shareData = {
+                  title: `${destinationLabel} Itinerary - MINARA`,
+                  url: window.location.href,
+                };
+                if (navigator.share) {
+                  try { await navigator.share(shareData); } catch {}
+                } else {
+                  await navigator.clipboard.writeText(window.location.href);
+                  toast.success("Link copied!");
+                }
+              }}
+            >
+              <Share2 className="w-4 h-4" /> Share
+            </Button>
             <Button
               variant="outline"
               size="sm"
