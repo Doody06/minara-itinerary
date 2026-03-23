@@ -205,6 +205,7 @@ export default function ItineraryPage() {
   };
 
   const currentItinerary = itinerary || [];
+  const displayedTripDays = Math.max(totalExpectedDays, currentItinerary.length);
   const destinationLabel = preferences?.destination
     ? preferences.destination.charAt(0).toUpperCase() + preferences.destination.slice(1)
     : "Your Trip";
