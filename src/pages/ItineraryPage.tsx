@@ -104,13 +104,16 @@ function ItemCard({
   onDetailedAdjust: (instruction: string, itemId: string) => void;
   isAdjusting: boolean;
 }) {
-  
   const Icon = typeIcons[item.type] || Landmark;
+  const safeTitle = sanitizeUiText(item.title, "Untitled stop");
+  const safeDescription = sanitizeUiText(item.description, "Details unavailable.");
+  const safeCost = sanitizeUiText(item.cost);
+  const safeExplanation = sanitizeUiText(item.explanation);
 
   return (
     <div
       className={`bg-card rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer ${isAdjusting ? "opacity-60 pointer-events-none" : ""}`}
-      onClick={() => onSelect(item)}
+      onClick={() => onSelect({ ...item, title: safeTitle, description: safeDescription, cost: safeCost || item.cost })}
     >
       <div className="flex gap-4">
         <div className="flex flex-col items-center">
@@ -128,21 +131,21 @@ function ItemCard({
             <div>
               <span className="text-xs font-medium text-muted-foreground">{item.time}</span>
               <h4 className="font-display font-semibold text-base group-hover:text-primary transition-colors">
-                {item.title}
+                {safeTitle}
               </h4>
             </div>
-            {item.cost && (
-              <span className="text-sm font-medium text-gold shrink-0">{item.cost}</span>
+            {safeCost && (
+              <span className="text-sm font-medium text-gold shrink-0">{safeCost}</span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{safeDescription}</p>
           <div className="flex flex-wrap gap-1.5 mt-2">
             {item.badges.map((b) => <HalalBadge key={b} badge={b} />)}
           </div>
-          {item.confidenceScore != null && item.confidenceScore < 70 && item.explanation && item.explanation.length > 10 && (
+          {item.confidenceScore != null && item.confidenceScore < 70 && safeExplanation && safeExplanation.length > 10 && (
             <div className="mt-2 p-3 bg-muted rounded-lg text-sm space-y-2">
               <ConfidenceIndicator score={item.confidenceScore} />
-              <p className="text-muted-foreground">{item.explanation}</p>
+              <p className="text-muted-foreground">{safeExplanation}</p>
             </div>
           )}
           <div className="mt-2" onClick={(e) => e.stopPropagation()}>
