@@ -340,7 +340,10 @@ export default function ItineraryPage() {
 
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-display font-semibold text-lg text-foreground">
-                  {currentItinerary[activeDay]?.title}
+                  {sanitizeUiText(
+                    currentItinerary[activeDay]?.title,
+                    currentItinerary[activeDay] ? `Day ${currentItinerary[activeDay].day}` : ""
+                  )}
                 </h3>
               </div>
 
@@ -376,14 +379,14 @@ export default function ItineraryPage() {
                   <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
                     <Hotel className="w-5 h-5 text-primary" /> Suggested Hotel
                   </h3>
-                  <h4 className="font-semibold">{hotel.name}</h4>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{hotel.description}</p>
+                  <h4 className="font-semibold">{sanitizeUiText(hotel.name, "Suggested Hotel")}</h4>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{sanitizeUiText(hotel.description)}</p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {hotel.badges.map((b) => <HalalBadge key={b} badge={b} />)}
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <ConfidenceIndicator score={hotel.confidenceScore} />
-                    <span className="text-sm font-semibold text-gold">{hotel.priceRange}</span>
+                    <span className="text-sm font-semibold text-gold">{sanitizeUiText(hotel.priceRange, hotel.priceRange)}</span>
                   </div>
                 </div>
               )}

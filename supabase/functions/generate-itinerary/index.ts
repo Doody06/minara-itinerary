@@ -451,16 +451,15 @@ Apply across entire itinerary.`;
       },
     };
 
-    // Call AI with retry - use fast model for speed
-    const result = await callAIWithRetry(aiUrl, aiHeaders, {
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      tools: [toolSchema],
-      tool_choice: { type: "function", function: { name: "generate_itinerary" } },
-    });
+    const result = await generateValidatedItinerary(
+      aiUrl,
+      aiHeaders,
+      systemPrompt,
+      userPrompt,
+      toolSchema,
+      generateFrom,
+      generateTo
+    );
 
     if (result.rateLimited) {
       return new Response(
@@ -475,14 +474,7 @@ Apply across entire itinerary.`;
       );
     }
 
-    const itineraryData = sanitizeStrings(result.data);
-    // Sanitize all items in all days
-    if (itineraryData.days) {
-      for (const day of itineraryData.days) {
-        day.items = sanitizeItems(day.items);
-      }
-    }
-    if (itineraryData.hotel) itineraryData.hotel = sanitizeHotel(itineraryData.hotel);
+    const itineraryData = result.data;
 
     // For detailed adjust targeting a single day, return immediately
     if (isDetailedAdjust && detailedAdjustDayNumber && itineraryData.days?.length > 0) {
