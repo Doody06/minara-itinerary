@@ -29,6 +29,17 @@ const quickEdits = [
   "More Luxury", "Less Walking", "More Food-Focused",
 ];
 
+function sanitizeUiText(value?: string, fallback = "") {
+  if (!value) return fallback;
+
+  const cleaned = value
+    .replace(/\}\s*,\s*\{day:.*$/i, "")
+    .replace(/[,;]?\s*(items|hotel|badges|halalStatus|confidenceScore|priceRange|type)\s*:\s*.*$/i, "")
+    .trim();
+
+  return cleaned || fallback;
+}
+
 function DetailedAdjustInput({
   placeholder,
   onSubmit,
