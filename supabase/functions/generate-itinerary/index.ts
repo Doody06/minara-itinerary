@@ -62,18 +62,8 @@ function sanitizeHotel(hotel: any): any {
   hotel.halalStatus = VALID_HALAL_STATUSES.has(hotel.halalStatus) ? hotel.halalStatus : undefined;
   return hotel;
 }
-  if (!hotel) return hotel;
-  // Clean name: remove any ",priceRange:" or similar field leaks
-  if (hotel.name) {
-    hotel.name = hotel.name.replace(/[,;]?\s*priceRange\s*:.*$/i, "").trim();
-  }
-  // Normalize priceRange to just "$X-Y/night"
-  if (hotel.priceRange) {
-    const match = hotel.priceRange.match(/\$?\s*(\d+)\s*[-–]\s*\$?\s*(\d+)/);
-    hotel.priceRange = match ? `$${match[1]}-${match[2]}/night` : hotel.priceRange;
-  }
-  return hotel;
-}
+
+
 
 // Helper: call AI gateway with retry
 async function callAIWithRetry(
