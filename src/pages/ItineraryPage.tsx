@@ -406,7 +406,7 @@ export default function ItineraryPage() {
                 <h3 className="font-display font-semibold mb-2 text-emerald">Trip Summary</h3>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between"><span className="text-muted-foreground">Destination</span><span className="font-medium">{destinationLabel}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Duration</span><span className="font-medium">{currentItinerary.length} days</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Duration</span><span className="font-medium">{displayedTripDays} days</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Travelers</span><span className="font-medium">{preferences?.travelerType || "—"}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Budget</span><span className="font-medium">${preferences?.budget?.toLocaleString() || "—"}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Pace</span><span className="font-medium capitalize">{preferences?.pace || "—"}</span></div>
