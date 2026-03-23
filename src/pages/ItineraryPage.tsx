@@ -29,6 +29,17 @@ const quickEdits = [
   "More Luxury", "Less Walking", "More Food-Focused",
 ];
 
+function sanitizeUiText(value?: string, fallback = "") {
+  if (!value) return fallback;
+
+  const cleaned = value
+    .replace(/\}\s*,\s*\{day:.*$/i, "")
+    .replace(/[,;]?\s*(items|hotel|badges|halalStatus|confidenceScore|priceRange|type)\s*:\s*.*$/i, "")
+    .trim();
+
+  return cleaned || fallback;
+}
+
 function DetailedAdjustInput({
   placeholder,
   onSubmit,
@@ -93,13 +104,16 @@ function ItemCard({
   onDetailedAdjust: (instruction: string, itemId: string) => void;
   isAdjusting: boolean;
 }) {
-  
   const Icon = typeIcons[item.type] || Landmark;
+  const safeTitle = sanitizeUiText(item.title, "Untitled stop");
+  const safeDescription = sanitizeUiText(item.description, "Details unavailable.");
+  const safeCost = sanitizeUiText(item.cost);
+  const safeExplanation = sanitizeUiText(item.explanation);
 
   return (
     <div
       className={`bg-card rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer ${isAdjusting ? "opacity-60 pointer-events-none" : ""}`}
-      onClick={() => onSelect(item)}
+      onClick={() => onSelect({ ...item, title: safeTitle, description: safeDescription, cost: safeCost || item.cost })}
     >
       <div className="flex gap-4">
         <div className="flex flex-col items-center">
@@ -117,21 +131,21 @@ function ItemCard({
             <div>
               <span className="text-xs font-medium text-muted-foreground">{item.time}</span>
               <h4 className="font-display font-semibold text-base group-hover:text-primary transition-colors">
-                {item.title}
+                {safeTitle}
               </h4>
             </div>
-            {item.cost && (
-              <span className="text-sm font-medium text-gold shrink-0">{item.cost}</span>
+            {safeCost && (
+              <span className="text-sm font-medium text-gold shrink-0">{safeCost}</span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{safeDescription}</p>
           <div className="flex flex-wrap gap-1.5 mt-2">
             {item.badges.map((b) => <HalalBadge key={b} badge={b} />)}
           </div>
-          {item.confidenceScore != null && item.confidenceScore < 70 && item.explanation && item.explanation.length > 10 && (
+          {item.confidenceScore != null && item.confidenceScore < 70 && safeExplanation && safeExplanation.length > 10 && (
             <div className="mt-2 p-3 bg-muted rounded-lg text-sm space-y-2">
               <ConfidenceIndicator score={item.confidenceScore} />
-              <p className="text-muted-foreground">{item.explanation}</p>
+              <p className="text-muted-foreground">{safeExplanation}</p>
             </div>
           )}
           <div className="mt-2" onClick={(e) => e.stopPropagation()}>
@@ -191,6 +205,7 @@ export default function ItineraryPage() {
   };
 
   const currentItinerary = itinerary || [];
+  const displayedTripDays = Math.max(totalExpectedDays, currentItinerary.length);
   const destinationLabel = preferences?.destination
     ? preferences.destination.charAt(0).toUpperCase() + preferences.destination.slice(1)
     : "Your Trip";
@@ -224,10 +239,10 @@ export default function ItineraryPage() {
             <Link to="/plan?step=4" className="text-sm text-primary hover:underline flex items-center gap-1 mb-2">
               <ArrowLeft className="w-4 h-4" /> Edit preferences
             </Link>
-            <h1 className="text-3xl font-display font-bold">Your {destinationLabel} Itinerary</h1>
-            <p className="text-muted-foreground">
-              {currentItinerary.length}-day halal-friendly {preferences?.travelerType || ""} trip · {preferences?.pace || "balanced"} pace
-            </p>
+             <h1 className="text-3xl font-display font-bold">Your {destinationLabel} Itinerary</h1>
+             <p className="text-muted-foreground">
+               {displayedTripDays}-day halal-friendly {preferences?.travelerType || ""} trip · {preferences?.pace || "balanced"} pace
+             </p>
           </div>
           <div className="flex gap-2">
             <Button
@@ -326,7 +341,10 @@ export default function ItineraryPage() {
 
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-display font-semibold text-lg text-foreground">
-                  {currentItinerary[activeDay]?.title}
+                  {sanitizeUiText(
+                    currentItinerary[activeDay]?.title,
+                    currentItinerary[activeDay] ? `Day ${currentItinerary[activeDay].day}` : ""
+                  )}
                 </h3>
               </div>
 
@@ -362,14 +380,14 @@ export default function ItineraryPage() {
                   <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
                     <Hotel className="w-5 h-5 text-primary" /> Suggested Hotel
                   </h3>
-                  <h4 className="font-semibold">{hotel.name}</h4>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{hotel.description}</p>
+                  <h4 className="font-semibold">{sanitizeUiText(hotel.name, "Suggested Hotel")}</h4>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{sanitizeUiText(hotel.description)}</p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {hotel.badges.map((b) => <HalalBadge key={b} badge={b} />)}
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <ConfidenceIndicator score={hotel.confidenceScore} />
-                    <span className="text-sm font-semibold text-gold">{hotel.priceRange}</span>
+                    <span className="text-sm font-semibold text-gold">{sanitizeUiText(hotel.priceRange, hotel.priceRange)}</span>
                   </div>
                 </div>
               )}
@@ -388,7 +406,7 @@ export default function ItineraryPage() {
                 <h3 className="font-display font-semibold mb-2 text-emerald">Trip Summary</h3>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between"><span className="text-muted-foreground">Destination</span><span className="font-medium">{destinationLabel}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Duration</span><span className="font-medium">{currentItinerary.length} days</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Duration</span><span className="font-medium">{displayedTripDays} days</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Travelers</span><span className="font-medium">{preferences?.travelerType || "—"}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Budget</span><span className="font-medium">${preferences?.budget?.toLocaleString() || "—"}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Pace</span><span className="font-medium capitalize">{preferences?.pace || "—"}</span></div>
