@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useRef, type ReactNode } from "react";
 import type { DayPlan, Badge, HalalStatus } from "@/data/dummyData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -30,6 +30,8 @@ interface ItineraryState {
   hotel: HotelSuggestion | null;
   isGenerating: boolean;
   isDetailedAdjusting: boolean;
+  isLoadingRemainingDays: boolean;
+  totalExpectedDays: number;
   error: string | null;
   setPreferences: (prefs: TripPreferences) => void;
   generateItinerary: (prefs: TripPreferences) => Promise<boolean>;
@@ -40,80 +42,159 @@ interface ItineraryState {
 
 const ItineraryContext = createContext<ItineraryState | null>(null);
 
+function calcTripDays(startDate: string, endDate: string): number {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  return Math.min(
+    Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1),
+    15
+  );
+}
+
 export function ItineraryProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState<TripPreferences | null>(null);
   const [itinerary, setItinerary] = useState<DayPlan[] | null>(null);
   const [hotel, setHotel] = useState<HotelSuggestion | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDetailedAdjusting, setIsDetailedAdjusting] = useState(false);
+  const [isLoadingRemainingDays, setIsLoadingRemainingDays] = useState(false);
+  const [totalExpectedDays, setTotalExpectedDays] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const remainingAbortRef = useRef<AbortController | null>(null);
+
+  const invokeGenerate = async (
+    prefs: TripPreferences,
+    extra?: Record<string, any>
+  ) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+    const { data, error: fnError } = await supabase.functions.invoke(
+      "generate-itinerary",
+      {
+        body: {
+          destination: prefs.destination,
+          startDate: prefs.startDate,
+          endDate: prefs.endDate,
+          travelerType: prefs.travelerType,
+          budget: prefs.budget,
+          interests: prefs.selectedInterests,
+          halalPreferences: prefs.selectedPreferences,
+          pace: prefs.pace,
+          specificNeeds: prefs.specificNeeds,
+          ...extra,
+        },
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (fnError) {
+      const errorMsg = data?.error || fnError.message || "Failed to generate itinerary";
+      throw new Error(errorMsg);
+    }
+    if (data?.error) throw new Error(data.error);
+    return data;
+  };
+
+  const generateItinerary = async (prefs: TripPreferences) => {
+    setPreferences(prefs);
+    setIsGenerating(true);
+    setError(null);
+    setItinerary(null);
+    setHotel(null);
+
+    const totalDays = calcTripDays(prefs.startDate, prefs.endDate);
+    setTotalExpectedDays(totalDays);
+    const firstBatchEnd = Math.min(3, totalDays);
+    const hasRemainingDays = totalDays > firstBatchEnd;
+
+    try {
+      // Phase 1: generate first 3 days (or fewer if trip is short)
+      const firstData = await invokeGenerate(prefs, {
+        dayRange: { from: 1, to: firstBatchEnd },
+      });
+
+      setItinerary(firstData.days);
+      setHotel(firstData.hotel);
+      setIsGenerating(false);
+
+      // Phase 2: generate remaining days in background
+      if (hasRemainingDays) {
+        setIsLoadingRemainingDays(true);
+        const abortCtrl = new AbortController();
+        remainingAbortRef.current = abortCtrl;
+
+        invokeGenerate(prefs, {
+          dayRange: { from: firstBatchEnd + 1, to: totalDays },
+        })
+          .then((restData) => {
+            if (!abortCtrl.signal.aborted) {
+              setItinerary((prev) => [...(prev || []), ...(restData.days || [])]);
+              // Update hotel if the second batch returns one (keep first if not)
+              if (restData.hotel) setHotel(restData.hotel);
+            }
+          })
+          .catch((e) => {
+            if (!abortCtrl.signal.aborted) {
+              console.error("Remaining days failed:", e);
+              toast({
+                title: "Partial generation",
+                description: "Some days couldn't be generated. Try regenerating.",
+                variant: "destructive",
+              });
+            }
+          })
+          .finally(() => {
+            if (!abortCtrl.signal.aborted) setIsLoadingRemainingDays(false);
+          });
+      }
+
+      return true;
+    } catch (e: any) {
+      const msg =
+        e?.name === "AbortError"
+          ? "Generation timed out. Try a shorter trip or simpler preferences."
+          : e?.message || "Failed to generate itinerary";
+      setError(msg);
+      toast({ title: "Generation failed", description: msg, variant: "destructive" });
+      setIsGenerating(false);
+      return false;
+    }
+  };
 
   const callGenerateFunction = async (
     prefs: TripPreferences,
     quickAdjustLabel?: string,
     currentItinerary?: DayPlan[]
   ) => {
+    // Cancel any in-flight remaining-days request
+    remainingAbortRef.current?.abort();
+    setIsLoadingRemainingDays(false);
     setIsGenerating(true);
     setError(null);
 
     try {
-      // Create an AbortController with a 120s timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
-
-      const { data, error: fnError } = await supabase.functions.invoke(
-        "generate-itinerary",
-        {
-          body: {
-            destination: prefs.destination,
-            startDate: prefs.startDate,
-            endDate: prefs.endDate,
-            travelerType: prefs.travelerType,
-            budget: prefs.budget,
-            interests: prefs.selectedInterests,
-            halalPreferences: prefs.selectedPreferences,
-            pace: prefs.pace,
-            specificNeeds: prefs.specificNeeds,
-            quickAdjust: quickAdjustLabel || undefined,
-            currentItinerary: currentItinerary || undefined,
-          },
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      // supabase.functions.invoke returns fnError for non-2xx but data may contain the real message
-      if (fnError) {
-        const errorMsg = data?.error || fnError.message || "Failed to generate itinerary";
-        throw new Error(errorMsg);
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
+      const data = await invokeGenerate(prefs, {
+        quickAdjust: quickAdjustLabel || undefined,
+        currentItinerary: currentItinerary || undefined,
+      });
 
       setItinerary(data.days);
       setHotel(data.hotel);
+      setTotalExpectedDays(data.days?.length || 0);
       return true;
     } catch (e: any) {
-      const msg = e?.name === "AbortError"
-        ? "Generation timed out. Try a shorter trip or simpler preferences."
-        : (e?.message || "Failed to generate itinerary");
+      const msg =
+        e?.name === "AbortError"
+          ? "Generation timed out. Try a shorter trip or simpler preferences."
+          : e?.message || "Failed to generate itinerary";
       setError(msg);
-      toast({
-        title: "Generation failed",
-        description: msg,
-        variant: "destructive",
-      });
+      toast({ title: "Generation failed", description: msg, variant: "destructive" });
       return false;
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const generateItinerary = async (prefs: TripPreferences) => {
-    setPreferences(prefs);
-    return await callGenerateFunction(prefs);
   };
 
   const quickAdjustFn = async (adjustment: string) => {
@@ -123,7 +204,7 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
 
   const regenerate = async () => {
     if (!preferences) return;
-    await callGenerateFunction(preferences);
+    await generateItinerary(preferences);
   };
 
   const detailedAdjustFn = async (instruction: string, dayNumber?: number, itemId?: string) => {
@@ -132,54 +213,28 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      const targetDay = dayNumber ? itinerary.find((d) => d.day === dayNumber) : undefined;
 
-      // Only send the targeted day(s) to the AI
-      const targetDay = dayNumber ? itinerary.find(d => d.day === dayNumber) : undefined;
+      const data = await invokeGenerate(preferences, {
+        detailedAdjust: {
+          instruction,
+          targetDayNumber: dayNumber || undefined,
+          targetItemId: itemId || undefined,
+          targetDay: targetDay || undefined,
+        },
+      });
 
-      const { data, error: fnError } = await supabase.functions.invoke(
-        "generate-itinerary",
-        {
-          body: {
-            destination: preferences.destination,
-            startDate: preferences.startDate,
-            endDate: preferences.endDate,
-            travelerType: preferences.travelerType,
-            budget: preferences.budget,
-            interests: preferences.selectedInterests,
-            halalPreferences: preferences.selectedPreferences,
-            pace: preferences.pace,
-            specificNeeds: preferences.specificNeeds,
-            detailedAdjust: {
-              instruction,
-              targetDayNumber: dayNumber || undefined,
-              targetItemId: itemId || undefined,
-              targetDay: targetDay || undefined,
-            },
-          },
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      if (fnError) throw new Error(fnError.message || "Failed to adjust itinerary");
-      if (data?.error) throw new Error(data.error);
-
-      // Merge the adjusted day back into the full itinerary
       if (dayNumber && data.adjustedDay) {
-        setItinerary(prev =>
-          (prev || []).map(d => d.day === dayNumber ? data.adjustedDay : d)
-        );
+        setItinerary((prev) => (prev || []).map((d) => (d.day === dayNumber ? data.adjustedDay : d)));
       } else if (data.days) {
         setItinerary(data.days);
       }
-
       if (data.hotel) setHotel(data.hotel);
     } catch (e: any) {
-      const msg = e?.name === "AbortError"
-        ? "Adjustment timed out. Try a simpler request."
-        : (e?.message || "Failed to adjust itinerary");
+      const msg =
+        e?.name === "AbortError"
+          ? "Adjustment timed out. Try a simpler request."
+          : e?.message || "Failed to adjust itinerary";
       setError(msg);
       toast({ title: "Adjustment failed", description: msg, variant: "destructive" });
     } finally {
@@ -195,6 +250,8 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
         hotel,
         isGenerating,
         isDetailedAdjusting,
+        isLoadingRemainingDays,
+        totalExpectedDays,
         error,
         setPreferences,
         generateItinerary,

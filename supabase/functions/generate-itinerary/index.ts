@@ -110,6 +110,7 @@ serve(async (req) => {
       quickAdjust,
       currentItinerary,
       detailedAdjust,
+      dayRange,
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -187,13 +188,17 @@ RULES:
 10. Hotel: ALWAYS provide numeric nightly price in USD (e.g. "$80-120/night"). NEVER use "$$$" or "moderate".
 11. The "explanation" field is ONLY for items with confidenceScore below 70. For those, write a single clear English sentence explaining WHY the halal status is uncertain (e.g. "Could not verify halal certification; check with the restaurant directly."). For items with confidenceScore 70 or above, set explanation to an empty string "".
 12. Each day needs a descriptive title mentioning area/theme.
-13. CRITICAL: Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.
+13. CRITICAL: ${dayRange ? `Generate ONLY days ${dayRange.from} through ${dayRange.to} (${dayRange.to - dayRange.from + 1} days). Start numbering at Day ${dayRange.from}.` : `Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.`}
 14. Keep descriptions concise (1-2 sentences).
 15. IMPORTANT: For EVERY item, provide latitude and longitude coordinates for the EXACT location. Use precise coordinates from the database when available. For places not in the database, use your knowledge to provide accurate GPS coordinates. This is critical for Google Maps links.`;
 
-    let userPrompt = `Create a COMPLETE ${days}-day itinerary for ${destination}. Generate exactly ${days} days.
+    const generateFrom = dayRange?.from || 1;
+    const generateTo = dayRange?.to || days;
+    const generateCount = generateTo - generateFrom + 1;
 
-Dates: ${startDate} to ${endDate} (${days} days)
+    let userPrompt = `Create ${dayRange ? `days ${generateFrom}-${generateTo}` : `a COMPLETE ${days}-day itinerary`} for ${destination}. Generate exactly ${generateCount} days${dayRange ? `, numbered Day ${generateFrom} through Day ${generateTo}` : ''}.
+
+Dates: ${startDate} to ${endDate} (${days} days total)
 Traveler: ${travelerType} | Budget: $${budget} | Pace: ${pace}
 Interests: ${interests?.join(", ") || "General sightseeing"}
 Halal preferences: ${halalPreferences?.join(", ") || "Standard halal"}

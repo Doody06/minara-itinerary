@@ -149,7 +149,7 @@ function ItemCard({
 
 export default function ItineraryPage() {
   const navigate = useNavigate();
-  const { itinerary, hotel, isGenerating, isDetailedAdjusting, quickAdjust, detailedAdjust, regenerate, preferences } = useItinerary();
+  const { itinerary, hotel, isGenerating, isDetailedAdjusting, isLoadingRemainingDays, totalExpectedDays, quickAdjust, detailedAdjust, regenerate, preferences } = useItinerary();
   const [activeDay, setActiveDay] = useState(0);
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
   const [hotelDialogOpen, setHotelDialogOpen] = useState(false);
@@ -307,6 +307,21 @@ export default function ItineraryPage() {
                     Day {day.day}
                   </button>
                 ))}
+                {/* Placeholder tabs for days still loading */}
+                {isLoadingRemainingDays &&
+                  Array.from(
+                    { length: totalExpectedDays - currentItinerary.length },
+                    (_, i) => currentItinerary.length + i + 1
+                  ).map((dayNum) => (
+                    <button
+                      key={`loading-${dayNum}`}
+                      disabled
+                      className="flex-1 min-w-fit px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground/50 flex items-center justify-center gap-1.5 cursor-not-allowed"
+                    >
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Day {dayNum}
+                    </button>
+                  ))}
               </div>
 
               <div className="flex items-center justify-between mb-4">
