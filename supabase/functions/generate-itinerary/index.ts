@@ -157,7 +157,7 @@ async function callAIWithRetry(
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     if (attempt > 0) {
       console.log(`Retry attempt ${attempt}...`);
-      await new Promise((r) => setTimeout(r, 2000 * attempt)); // backoff
+      await new Promise((r) => setTimeout(r, 2000 * attempt));
     }
     try {
       const response = await fetch(url, {
@@ -166,18 +166,14 @@ async function callAIWithRetry(
         body: JSON.stringify(body),
       });
 
-      if (response.status === 429) {
-        return { rateLimited: true, status: 429 };
-      }
-      if (response.status === 402) {
-        return { paymentRequired: true, status: 402 };
-      }
+      if (response.status === 429) return { rateLimited: true, status: 429 };
+      if (response.status === 402) return { paymentRequired: true, status: 402 };
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`AI Gateway error (attempt ${attempt}):`, response.status, errorText);
         lastError = new Error(`AI Gateway error: ${response.status}`);
-        continue; // retry
+        continue;
       }
 
       const data = await response.json();
@@ -185,7 +181,7 @@ async function callAIWithRetry(
       if (!toolCall?.function?.arguments) {
         console.error(`No tool call (attempt ${attempt}):`, JSON.stringify(data).slice(0, 500));
         lastError = new Error("AI did not return structured data");
-        continue; // retry
+        continue;
       }
 
       return { success: true, data: JSON.parse(toolCall.function.arguments) };
@@ -195,6 +191,52 @@ async function callAIWithRetry(
     }
   }
   throw lastError || new Error("AI call failed after retries");
+}
+
+async function generateValidatedItinerary(
+  aiUrl: string,
+  aiHeaders: Record<string, string>,
+  systemPrompt: string,
+  userPrompt: string,
+  toolSchema: any,
+  expectedFrom: number,
+  expectedTo: number
+): Promise<any> {
+  const modelSequence = ["google/gemini-3-flash-preview", "openai/gpt-5-mini"];
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < modelSequence.length; attempt++) {
+    const retryInstruction = attempt === 0
+      ? ""
+      : "\nRETRY INSTRUCTION: The previous output leaked schema or JSON fragments into string fields. Return only clean plain-English field values with no raw schema text.";
+
+    try {
+      const result = await callAIWithRetry(aiUrl, aiHeaders, {
+        model: modelSequence[attempt],
+        messages: [
+          { role: "system", content: `${systemPrompt}${retryInstruction}` },
+          { role: "user", content: userPrompt },
+        ],
+        tools: [toolSchema],
+        tool_choice: { type: "function", function: { name: "generate_itinerary" } },
+      });
+
+      if (result.rateLimited || result.paymentRequired) return result;
+
+      const itineraryData = sanitizeItineraryData(sanitizeStrings(result.data));
+      const validationError = validateItineraryData(itineraryData, expectedFrom, expectedTo);
+
+      if (!validationError) return { success: true, data: itineraryData };
+
+      lastError = new Error(validationError);
+      console.error(`Invalid itinerary structure on attempt ${attempt + 1}:`, validationError, JSON.stringify(itineraryData).slice(0, 600));
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      console.error(`Generation attempt ${attempt + 1} failed:`, lastError.message);
+    }
+  }
+
+  throw lastError || new Error("Failed to generate a valid itinerary");
 }
 
 serve(async (req) => {
