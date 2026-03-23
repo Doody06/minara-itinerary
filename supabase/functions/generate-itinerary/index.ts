@@ -25,20 +25,45 @@ function sanitizeStrings(obj: any): any {
   return obj;
 }
 
+const VALID_BADGES = new Set([
+  "halal-certified", "muslim-friendly", "no-alcohol", "prayer-nearby",
+  "family-friendly", "kid-friendly", "budget-fit", "verified",
+]);
+
+const VALID_HALAL_STATUSES = new Set(["verified", "muslim-friendly", "needs-check"]);
+
+// Sanitize itinerary items to strip malformed AI output
+function sanitizeItems(items: any[]): any[] {
+  return (items || []).map((item: any) => ({
+    ...item,
+    badges: Array.isArray(item.badges)
+      ? item.badges.filter((b: any) => typeof b === "string" && VALID_BADGES.has(b.trim())).map((b: string) => b.trim())
+      : [],
+    halalStatus: VALID_HALAL_STATUSES.has(item.halalStatus) ? item.halalStatus : undefined,
+    description: typeof item.description === "string"
+      ? item.description.replace(/[,;]?\s*(halalStatus|confidenceScore|badges)\s*:.*$/gi, "").trim()
+      : item.description,
+  }));
+}
+
 // Clean hotel price range to just "$X-Y/night" format
 function sanitizeHotel(hotel: any): any {
   if (!hotel) return hotel;
-  // Clean name: remove any ",priceRange:" or similar field leaks
   if (hotel.name) {
     hotel.name = hotel.name.replace(/[,;]?\s*priceRange\s*:.*$/i, "").trim();
   }
-  // Normalize priceRange to just "$X-Y/night"
   if (hotel.priceRange) {
     const match = hotel.priceRange.match(/\$?\s*(\d+)\s*[-–]\s*\$?\s*(\d+)/);
     hotel.priceRange = match ? `$${match[1]}-${match[2]}/night` : hotel.priceRange;
   }
+  hotel.badges = Array.isArray(hotel.badges)
+    ? hotel.badges.filter((b: any) => typeof b === "string" && VALID_BADGES.has(b.trim()))
+    : [];
+  hotel.halalStatus = VALID_HALAL_STATUSES.has(hotel.halalStatus) ? hotel.halalStatus : undefined;
   return hotel;
 }
+
+
 
 // Helper: call AI gateway with retry
 async function callAIWithRetry(
@@ -328,6 +353,12 @@ Apply across entire itinerary.`;
     }
 
     const itineraryData = sanitizeStrings(result.data);
+    // Sanitize all items in all days
+    if (itineraryData.days) {
+      for (const day of itineraryData.days) {
+        day.items = sanitizeItems(day.items);
+      }
+    }
     if (itineraryData.hotel) itineraryData.hotel = sanitizeHotel(itineraryData.hotel);
 
     // For detailed adjust targeting a single day, return immediately
