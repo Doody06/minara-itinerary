@@ -363,6 +363,12 @@ Apply across entire itinerary.`;
     }
 
     const itineraryData = sanitizeStrings(result.data);
+    // Sanitize all items in all days
+    if (itineraryData.days) {
+      for (const day of itineraryData.days) {
+        day.items = sanitizeItems(day.items);
+      }
+    }
     if (itineraryData.hotel) itineraryData.hotel = sanitizeHotel(itineraryData.hotel);
 
     // For detailed adjust targeting a single day, return immediately
