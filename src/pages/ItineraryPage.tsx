@@ -239,10 +239,10 @@ export default function ItineraryPage() {
             <Link to="/plan?step=4" className="text-sm text-primary hover:underline flex items-center gap-1 mb-2">
               <ArrowLeft className="w-4 h-4" /> Edit preferences
             </Link>
-            <h1 className="text-3xl font-display font-bold">Your {destinationLabel} Itinerary</h1>
-            <p className="text-muted-foreground">
-              {currentItinerary.length}-day halal-friendly {preferences?.travelerType || ""} trip · {preferences?.pace || "balanced"} pace
-            </p>
+             <h1 className="text-3xl font-display font-bold">Your {destinationLabel} Itinerary</h1>
+             <p className="text-muted-foreground">
+               {displayedTripDays}-day halal-friendly {preferences?.travelerType || ""} trip · {preferences?.pace || "balanced"} pace
+             </p>
           </div>
           <div className="flex gap-2">
             <Button
