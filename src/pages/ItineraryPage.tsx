@@ -10,7 +10,7 @@ import { PrayerTimesSidebar } from "@/components/PrayerTimesSidebar";
 import type { ItineraryItem } from "@/data/dummyData";
 import {
   Utensils, MapPin, RotateCcw, ArrowLeft, ChevronDown, ChevronUp,
-  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2,
+  Hotel, Bus, Info, Download, Sparkles, Landmark, Loader2,
   PenLine, Send, ExternalLink
 } from "lucide-react";
 import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
