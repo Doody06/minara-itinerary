@@ -50,7 +50,8 @@ Step 5: Enter your preferences
 ![preferences](image-5.png) 
 
 Step 6: Wait a little bit then enjoy your itinerary!
-![itinerary](image-6.png)
+<img width="1337" height="748" alt="itinerary" src="https://github.com/user-attachments/assets/652b0799-a7b2-486f-8ab2-b689f74bdbca" />
+
 
 If you click on a place you can get more information
 ![pop up card](image-7.png)
