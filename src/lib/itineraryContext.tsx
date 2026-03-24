@@ -33,7 +33,6 @@ interface ItineraryState {
   isLoadingRemainingDays: boolean;
   totalExpectedDays: number;
   error: string | null;
-  progressStep: number;
   setPreferences: (prefs: TripPreferences) => void;
   generateItinerary: (prefs: TripPreferences) => Promise<boolean>;
   quickAdjust: (adjustment: string) => Promise<void>;
@@ -61,48 +60,41 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
   const [isLoadingRemainingDays, setIsLoadingRemainingDays] = useState(false);
   const [totalExpectedDays, setTotalExpectedDays] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [progressStep, setProgressStep] = useState(0);
   const remainingAbortRef = useRef<AbortController | null>(null);
-  const progressTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const invokeGenerate = async (
     prefs: TripPreferences,
     extra?: Record<string, any>
   ) => {
-    setIsGenerating(true);
-    setError(null);
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000);
 
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke(
-        "generate-itinerary",
-        {
-          body: {
-            destination: prefs.destination,
-            startDate: prefs.startDate,
-            endDate: prefs.endDate,
-            travelerType: prefs.travelerType,
-            budget: prefs.budget,
-            interests: prefs.selectedInterests,
-            halalPreferences: prefs.selectedPreferences,
-            pace: prefs.pace,
-            specificNeeds: prefs.specificNeeds,
-            ...extra,
-          },
-        }
-      );
-
-      if (fnError) {
-        const errorMsg = data?.error || fnError.message || "Failed to generate itinerary";
-        throw new Error(errorMsg);
+    const { data, error: fnError } = await supabase.functions.invoke(
+      "generate-itinerary",
+      {
+        body: {
+          destination: prefs.destination,
+          startDate: prefs.startDate,
+          endDate: prefs.endDate,
+          travelerType: prefs.travelerType,
+          budget: prefs.budget,
+          interests: prefs.selectedInterests,
+          halalPreferences: prefs.selectedPreferences,
+          pace: prefs.pace,
+          specificNeeds: prefs.specificNeeds,
+          ...extra,
+        },
       }
-      if (data?.error) throw new Error(data.error);
-      return data;
-    } finally {
-      clearTimeout(timeoutId);
+    );
+
+    clearTimeout(timeoutId);
+
+    if (fnError) {
+      const errorMsg = data?.error || fnError.message || "Failed to generate itinerary";
+      throw new Error(errorMsg);
     }
+    if (data?.error) throw new Error(data.error);
+    return data;
   };
 
   const generateItinerary = async (prefs: TripPreferences) => {
@@ -190,6 +182,7 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
 
       setItinerary(data.days);
       setHotel(data.hotel);
+      setTotalExpectedDays(data.days?.length || 0);
       return true;
     } catch (e: any) {
       const msg =
@@ -197,16 +190,9 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
           ? "Generation timed out. Try a shorter trip or simpler preferences."
           : e?.message || "Failed to generate itinerary";
       setError(msg);
-      toast({
-        title: "Generation failed",
-        description: msg,
-        variant: "destructive",
-      });
+      toast({ title: "Generation failed", description: msg, variant: "destructive" });
       return false;
     } finally {
-      // Clear all progress timeouts
-      progressTimeouts.current.forEach(clearTimeout);
-      progressTimeouts.current = [];
       setIsGenerating(false);
     }
   };
@@ -267,7 +253,6 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
         isLoadingRemainingDays,
         totalExpectedDays,
         error,
-        progressStep,
         setPreferences,
         generateItinerary,
         quickAdjust: quickAdjustFn,

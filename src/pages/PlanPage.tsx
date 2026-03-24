@@ -10,8 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { destinations, travelerTypes, interests, halalPreferences, paceOptions } from "@/data/dummyData";
-import { ArrowLeft, ArrowRight, MapPin, Calendar, Users, Heart, Settings2, Sparkles, Loader2, AlertCircle, RotateCcw } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ArrowLeft, ArrowRight, MapPin, Calendar, Users, Heart, Settings2, Sparkles, Loader2 } from "lucide-react";
 
 const steps = [
   { title: "Destination", icon: MapPin },
@@ -24,7 +23,7 @@ const steps = [
 export default function PlanPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { generateItinerary, isGenerating, preferences: savedPrefs, progressStep, error, regenerate } = useItinerary();
+  const { generateItinerary, isGenerating, preferences: savedPrefs } = useItinerary();
   const initialStep = Math.min(Number(searchParams.get("step") || 0), 4);
   const [step, setStep] = useState(initialStep);
   const [form, setForm] = useState({
@@ -309,26 +308,7 @@ export default function PlanPage() {
           </div>
         </div>
 
-        {isGenerating && <GeneratingOverlay progressStep={progressStep} />}
-
-        {error && (
-          <div className="mt-6">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Generation Failed</AlertTitle>
-              <AlertDescription className="mt-2">
-                {error}
-                <Button
-                  onClick={regenerate}
-                  disabled={isGenerating}
-                  className="mt-3 gap-2 bg-destructive hover:bg-destructive/90"
-                >
-                  <RotateCcw className="w-4 h-4" /> Retry Generation
-                </Button>
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
+        {isGenerating && <GeneratingOverlay />}
       </div>
     </div>
   );
