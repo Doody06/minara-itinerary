@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -45,7 +45,7 @@
     --gold: 38 80% 50%;
     --gold-light: 38 60% 92%;
 
-    --font-display: 'DM Sans', sans-serif;
+    --font-display: 'Playfair Display', serif;
     --font-body: 'DM Sans', sans-serif;
 
     --sidebar-background: 0 0% 98%;
@@ -69,10 +69,7 @@
   }
 
   h1, h2, h3, h4 {
-    font-family: var(--font-body), 'DM Sans', sans-serif;
-    font-feature-settings: "liga" 1, "clig" 1;
-    font-variant-ligatures: common-ligatures;
-    letter-spacing: 0.01em;
+    font-family: var(--font-display);
   }
 }
 

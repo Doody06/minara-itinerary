@@ -35,8 +35,6 @@ function sanitizeUiText(value?: string, fallback = "") {
   const cleaned = value
     .replace(/\}\s*,\s*\{day:.*$/i, "")
     .replace(/[,;]?\s*(items|hotel|badges|halalStatus|confidenceScore|priceRange|type)\s*:\s*.*$/i, "")
-    .replace(/base$/i, "")
-    .replace(/\bbase\b$/i, "")
     .trim();
 
   return cleaned || fallback;
