@@ -40,7 +40,7 @@ Step 1: Pick your destination.
 Step 2: Enter your trip details.
 ![trip details](image-2.png)
 
-Step 3: Enter your traveller type.
+Step 3: Enter your traveler type.
 ![traveller type](image-3.png)
 
 Step 4: Enter your interests.
