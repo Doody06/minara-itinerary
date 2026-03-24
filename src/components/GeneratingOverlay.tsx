@@ -59,15 +59,17 @@ export default function GeneratingOverlay() {
           </p>
         </div>
 
-        {/* Progress bar */}
-        <div className="space-y-2 px-4">
-          <Progress value={progressValue} className="h-2" />
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Step {currentStep + 1} of {STEPS.length}</span>
-            <span>
-              {minutes > 0 ? `${minutes}m ` : ""}{seconds}s elapsed
-            </span>
-          </div>
+        {/* Circular spinner */}
+        <div className="flex justify-center">
+          <svg className="w-10 h-10 animate-spin" viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="17" stroke="hsl(var(--muted))" strokeWidth="3" />
+            <path
+              d="M20 3a17 17 0 0 1 17 17"
+              stroke="hsl(var(--primary))"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
         </div>
 
         {/* Hint */}
