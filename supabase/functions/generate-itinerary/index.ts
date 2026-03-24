@@ -25,142 +25,20 @@ function sanitizeStrings(obj: any): any {
   return obj;
 }
 
-const VALID_BADGES = new Set([
-  "halal-certified", "muslim-friendly", "no-alcohol", "prayer-nearby",
-  "family-friendly", "kid-friendly", "budget-fit", "verified",
-]);
-
-const VALID_HALAL_STATUSES = new Set(["verified", "muslim-friendly", "needs-check"]);
-const SCHEMA_LEAK_PATTERN = /(\}\s*,\s*\{day:|\b(items|badges|halalStatus|confidenceScore|priceRange|type)\s*:\s*[\[{"]?)/i;
-
-function normalizeAiArtifact(value: string): string {
-  let cleaned = value.trim();
-
-  // Remove AI model schema artifacts leaked into natural text (e.g. trailing 'Base').
-  // This handles both separated and concatenated forms like 'DiningBase'.
-  cleaned = cleaned.replace(/base$/i, "");
-  cleaned = cleaned.replace(/\bbase\b$/i, "");
-
-  // Remove duplicate spacing introduced by stripping
-  cleaned = cleaned.replace(/\s+/g, " ").trim();
-
-  return cleaned;
-}
-
-function sanitizeTextField(
-  value: unknown,
-  field: "dayTitle" | "itemTitle" | "description" | "hotelName" | "hotelDescription" = "description"
-): string {
-  if (typeof value !== "string") return "";
-
-  const patterns = field === "dayTitle"
-    ? [/\}\s*,\s*\{day:.*$/i, /[,;]?\s*(items|hotel)\s*:\s*.*$/i]
-    : field === "itemTitle" || field === "hotelName"
-      ? [/[,;]?\s*(type|badges|halalStatus|confidenceScore|priceRange)\s*:\s*.*$/i]
-      : [/[,;]?\s*(halalStatus|confidenceScore|badges|priceRange|type)\s*:\s*.*$/i];
-
-  let cleaned = value;
-  for (const pattern of patterns) {
-    cleaned = cleaned.replace(pattern, "");
-  }
-
-  return normalizeAiArtifact(cleaned);
-}
-
-function hasSchemaLeak(value: unknown): boolean {
-  return typeof value === "string" && SCHEMA_LEAK_PATTERN.test(value);
-}
-
-function sanitizeItems(items: any[]): any[] {
-  return (items || []).map((item: any) => ({
-    ...item,
-    title: sanitizeTextField(item.title, "itemTitle"),
-    description: sanitizeTextField(item.description, "description"),
-    explanation: item.confidenceScore != null && item.confidenceScore < 70
-      ? sanitizeTextField(item.explanation ?? "", "description")
-      : "",
-    cost: typeof item.cost === "string" ? normalizeAiArtifact(item.cost) : item.cost,
-    badges: Array.isArray(item.badges)
-      ? item.badges
-          .filter((b: any) => typeof b === "string" && VALID_BADGES.has(b.trim()))
-          .map((b: string) => b.trim())
-      : [],
-    halalStatus: VALID_HALAL_STATUSES.has(item.halalStatus) ? item.halalStatus : undefined,
-  }));
-}
-
+// Clean hotel price range to just "$X-Y/night" format
 function sanitizeHotel(hotel: any): any {
   if (!hotel) return hotel;
-
-  const cleanedHotel = {
-    ...hotel,
-    name: sanitizeTextField(hotel.name, "hotelName"),
-    description: sanitizeTextField(hotel.description, "hotelDescription"),
-    badges: Array.isArray(hotel.badges)
-      ? hotel.badges
-          .filter((b: any) => typeof b === "string" && VALID_BADGES.has(b.trim()))
-          .map((b: string) => b.trim())
-      : [],
-    halalStatus: VALID_HALAL_STATUSES.has(hotel.halalStatus) ? hotel.halalStatus : undefined,
-  };
-
-  if (cleanedHotel.priceRange) {
-    cleanedHotel.priceRange = normalizeAiArtifact(cleanedHotel.priceRange);
-    const match = cleanedHotel.priceRange.match(/\$?\s*(\d+)\s*[-–]\s*\$?\s*(\d+)/);
-    cleanedHotel.priceRange = match ? `$${match[1]}-${match[2]}/night` : cleanedHotel.priceRange;
+  // Clean name: remove any ",priceRange:" or similar field leaks
+  if (hotel.name) {
+    hotel.name = hotel.name.replace(/[,;]?\s*priceRange\s*:.*$/i, "").trim();
   }
-
-  return cleanedHotel;
+  // Normalize priceRange to just "$X-Y/night"
+  if (hotel.priceRange) {
+    const match = hotel.priceRange.match(/\$?\s*(\d+)\s*[-–]\s*\$?\s*(\d+)/);
+    hotel.priceRange = match ? `$${match[1]}-${match[2]}/night` : hotel.priceRange;
+  }
+  return hotel;
 }
-
-function sanitizeItineraryData(itineraryData: any): any {
-  return {
-    ...itineraryData,
-    days: Array.isArray(itineraryData?.days)
-      ? itineraryData.days.map((day: any) => ({
-          ...day,
-          title: sanitizeTextField(day.title, "dayTitle"),
-          items: sanitizeItems(day.items),
-        }))
-      : [],
-    hotel: itineraryData?.hotel ? sanitizeHotel(itineraryData.hotel) : null,
-  };
-}
-
-function validateItineraryData(itineraryData: any, expectedFrom: number, expectedTo: number): string | null {
-  const expectedCount = expectedTo - expectedFrom + 1;
-
-  if (!itineraryData || !Array.isArray(itineraryData.days)) {
-    return "Missing days array";
-  }
-
-  if (itineraryData.days.length !== expectedCount) {
-    return `Expected ${expectedCount} days but received ${itineraryData.days.length}`;
-  }
-
-  for (let index = 0; index < itineraryData.days.length; index++) {
-    const expectedDay = expectedFrom + index;
-    const day = itineraryData.days[index];
-
-    if (day?.day !== expectedDay) return `Expected day ${expectedDay} but received ${day?.day}`;
-    if (!day?.title || hasSchemaLeak(day.title)) return `Invalid title for day ${expectedDay}`;
-    if (!Array.isArray(day.items) || day.items.length === 0) return `Missing items for day ${expectedDay}`;
-
-    for (const item of day.items) {
-      if (!item?.id || !item?.time || !item?.cost) return `Incomplete item in day ${expectedDay}`;
-      if (!item?.title || hasSchemaLeak(item.title)) return `Invalid item title in day ${expectedDay}`;
-      if (hasSchemaLeak(item.description) || hasSchemaLeak(item.explanation)) return `Invalid item description in day ${expectedDay}`;
-    }
-  }
-
-  if (!itineraryData.hotel?.name || hasSchemaLeak(itineraryData.hotel.name) || hasSchemaLeak(itineraryData.hotel.description)) {
-    return "Invalid hotel data";
-  }
-
-  return null;
-}
-
-
 
 // Helper: call AI gateway with retry
 async function callAIWithRetry(
@@ -173,7 +51,7 @@ async function callAIWithRetry(
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     if (attempt > 0) {
       console.log(`Retry attempt ${attempt}...`);
-      await new Promise((r) => setTimeout(r, 2000 * attempt));
+      await new Promise((r) => setTimeout(r, 2000 * attempt)); // backoff
     }
     try {
       const response = await fetch(url, {
@@ -182,14 +60,18 @@ async function callAIWithRetry(
         body: JSON.stringify(body),
       });
 
-      if (response.status === 429) return { rateLimited: true, status: 429 };
-      if (response.status === 402) return { paymentRequired: true, status: 402 };
+      if (response.status === 429) {
+        return { rateLimited: true, status: 429 };
+      }
+      if (response.status === 402) {
+        return { paymentRequired: true, status: 402 };
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`AI Gateway error (attempt ${attempt}):`, response.status, errorText);
         lastError = new Error(`AI Gateway error: ${response.status}`);
-        continue;
+        continue; // retry
       }
 
       const data = await response.json();
@@ -197,7 +79,7 @@ async function callAIWithRetry(
       if (!toolCall?.function?.arguments) {
         console.error(`No tool call (attempt ${attempt}):`, JSON.stringify(data).slice(0, 500));
         lastError = new Error("AI did not return structured data");
-        continue;
+        continue; // retry
       }
 
       return { success: true, data: JSON.parse(toolCall.function.arguments) };
@@ -207,52 +89,6 @@ async function callAIWithRetry(
     }
   }
   throw lastError || new Error("AI call failed after retries");
-}
-
-async function generateValidatedItinerary(
-  aiUrl: string,
-  aiHeaders: Record<string, string>,
-  systemPrompt: string,
-  userPrompt: string,
-  toolSchema: any,
-  expectedFrom: number,
-  expectedTo: number
-): Promise<any> {
-  const modelSequence = ["google/gemini-3-flash-preview", "openai/gpt-5-mini"];
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt < modelSequence.length; attempt++) {
-    const retryInstruction = attempt === 0
-      ? ""
-      : "\nRETRY INSTRUCTION: The previous output leaked schema or JSON fragments into string fields. Return only clean plain-English field values with no raw schema text.";
-
-    try {
-      const result = await callAIWithRetry(aiUrl, aiHeaders, {
-        model: modelSequence[attempt],
-        messages: [
-          { role: "system", content: `${systemPrompt}${retryInstruction}` },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [toolSchema],
-        tool_choice: { type: "function", function: { name: "generate_itinerary" } },
-      });
-
-      if (result.rateLimited || result.paymentRequired) return result;
-
-      const itineraryData = sanitizeItineraryData(sanitizeStrings(result.data));
-      const validationError = validateItineraryData(itineraryData, expectedFrom, expectedTo);
-
-      if (!validationError) return { success: true, data: itineraryData };
-
-      lastError = new Error(validationError);
-      console.error(`Invalid itinerary structure on attempt ${attempt + 1}:`, validationError, JSON.stringify(itineraryData).slice(0, 600));
-    } catch (e) {
-      lastError = e instanceof Error ? e : new Error(String(e));
-      console.error(`Generation attempt ${attempt + 1} failed:`, lastError.message);
-    }
-  }
-
-  throw lastError || new Error("Failed to generate a valid itinerary");
 }
 
 serve(async (req) => {
@@ -274,7 +110,6 @@ serve(async (req) => {
       quickAdjust,
       currentItinerary,
       detailedAdjust,
-      dayRange,
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -352,17 +187,13 @@ RULES:
 10. Hotel: ALWAYS provide numeric nightly price in USD (e.g. "$80-120/night"). NEVER use "$$$" or "moderate".
 11. The "explanation" field is ONLY for items with confidenceScore below 70. For those, write a single clear English sentence explaining WHY the halal status is uncertain (e.g. "Could not verify halal certification; check with the restaurant directly."). For items with confidenceScore 70 or above, set explanation to an empty string "".
 12. Each day needs a descriptive title mentioning area/theme.
-13. CRITICAL: ${dayRange ? `Generate ONLY days ${dayRange.from} through ${dayRange.to} (${dayRange.to - dayRange.from + 1} days). Start numbering at Day ${dayRange.from}.` : `Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.`}
+13. CRITICAL: Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.
 14. Keep descriptions concise (1-2 sentences).
 15. IMPORTANT: For EVERY item, provide latitude and longitude coordinates for the EXACT location. Use precise coordinates from the database when available. For places not in the database, use your knowledge to provide accurate GPS coordinates. This is critical for Google Maps links.`;
 
-    const generateFrom = dayRange?.from || 1;
-    const generateTo = dayRange?.to || days;
-    const generateCount = generateTo - generateFrom + 1;
+    let userPrompt = `Create a COMPLETE ${days}-day itinerary for ${destination}. Generate exactly ${days} days.
 
-    let userPrompt = `Create ${dayRange ? `days ${generateFrom}-${generateTo}` : `a COMPLETE ${days}-day itinerary`} for ${destination}. Generate exactly ${generateCount} days${dayRange ? `, numbered Day ${generateFrom} through Day ${generateTo}` : ''}.
-
-Dates: ${startDate} to ${endDate} (${days} days total)
+Dates: ${startDate} to ${endDate} (${days} days)
 Traveler: ${travelerType} | Budget: $${budget} | Pace: ${pace}
 Interests: ${interests?.join(", ") || "General sightseeing"}
 Halal preferences: ${halalPreferences?.join(", ") || "Standard halal"}
@@ -467,15 +298,16 @@ Apply across entire itinerary.`;
       },
     };
 
-    const result = await generateValidatedItinerary(
-      aiUrl,
-      aiHeaders,
-      systemPrompt,
-      userPrompt,
-      toolSchema,
-      generateFrom,
-      generateTo
-    );
+    // Call AI with retry - use fast model for speed
+    const result = await callAIWithRetry(aiUrl, aiHeaders, {
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [toolSchema],
+      tool_choice: { type: "function", function: { name: "generate_itinerary" } },
+    });
 
     if (result.rateLimited) {
       return new Response(
@@ -490,7 +322,8 @@ Apply across entire itinerary.`;
       );
     }
 
-    const itineraryData = result.data;
+    const itineraryData = sanitizeStrings(result.data);
+    if (itineraryData.hotel) itineraryData.hotel = sanitizeHotel(itineraryData.hotel);
 
     // For detailed adjust targeting a single day, return immediately
     if (isDetailedAdjust && detailedAdjustDayNumber && itineraryData.days?.length > 0) {
