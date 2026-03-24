@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { UtensilsCrossed, MapPin, Route, Hotel, Camera, Clock, ShieldCheck, Sparkles } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 
 const STEPS = [
   { icon: UtensilsCrossed, text: "Searching halal-certified restaurants..." },
@@ -17,13 +16,7 @@ const STEP_INTERVAL = 3500;
 
 export default function GeneratingOverlay() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
   const [fadeKey, setFadeKey] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,10 +26,7 @@ export default function GeneratingOverlay() {
     return () => clearInterval(timer);
   }, []);
 
-  const progressValue = Math.min(((currentStep + 1) / STEPS.length) * 100, 95);
   const StepIcon = STEPS[currentStep].icon;
-  const minutes = Math.floor(elapsed / 60);
-  const seconds = elapsed % 60;
 
   return (
     <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center">
