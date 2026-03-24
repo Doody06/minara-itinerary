@@ -10,7 +10,7 @@ import { PrayerTimesSidebar } from "@/components/PrayerTimesSidebar";
 import type { ItineraryItem } from "@/data/dummyData";
 import {
   Utensils, MapPin, RotateCcw, ArrowLeft, ChevronDown, ChevronUp,
-  Hotel, Bus, Info, Download, Share2, Sparkles, Landmark, Loader2,
+  Hotel, Bus, Info, Download, Sparkles, Landmark, Loader2,
   PenLine, Send, ExternalLink
 } from "lucide-react";
 import { PlaceDetailDialog } from "@/components/PlaceDetailDialog";
@@ -230,25 +230,6 @@ export default function ItineraryPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1"
-              onClick={async () => {
-                const shareData = {
-                  title: `${destinationLabel} Itinerary - MINARA`,
-                  url: window.location.href,
-                };
-                if (navigator.share) {
-                  try { await navigator.share(shareData); } catch {}
-                } else {
-                  await navigator.clipboard.writeText(window.location.href);
-                  toast.success("Link copied!");
-                }
-              }}
-            >
-              <Share2 className="w-4 h-4" /> Share
-            </Button>
             <Button
               variant="outline"
               size="sm"
