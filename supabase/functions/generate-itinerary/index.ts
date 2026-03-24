@@ -33,6 +33,20 @@ const VALID_BADGES = new Set([
 const VALID_HALAL_STATUSES = new Set(["verified", "muslim-friendly", "needs-check"]);
 const SCHEMA_LEAK_PATTERN = /(\}\s*,\s*\{day:|\b(items|badges|halalStatus|confidenceScore|priceRange|type)\s*:\s*[\[{"]?)/i;
 
+function normalizeAiArtifact(value: string): string {
+  let cleaned = value.trim();
+
+  // Remove AI model schema artifacts leaked into natural text (e.g. trailing 'Base').
+  // This handles both separated and concatenated forms like 'DiningBase'.
+  cleaned = cleaned.replace(/base$/i, "");
+  cleaned = cleaned.replace(/\bbase\b$/i, "");
+
+  // Remove duplicate spacing introduced by stripping
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+
+  return cleaned;
+}
+
 function sanitizeTextField(
   value: unknown,
   field: "dayTitle" | "itemTitle" | "description" | "hotelName" | "hotelDescription" = "description"
@@ -50,7 +64,7 @@ function sanitizeTextField(
     cleaned = cleaned.replace(pattern, "");
   }
 
-  return cleaned.trim();
+  return normalizeAiArtifact(cleaned);
 }
 
 function hasSchemaLeak(value: unknown): boolean {
@@ -65,6 +79,7 @@ function sanitizeItems(items: any[]): any[] {
     explanation: item.confidenceScore != null && item.confidenceScore < 70
       ? sanitizeTextField(item.explanation ?? "", "description")
       : "",
+    cost: typeof item.cost === "string" ? normalizeAiArtifact(item.cost) : item.cost,
     badges: Array.isArray(item.badges)
       ? item.badges
           .filter((b: any) => typeof b === "string" && VALID_BADGES.has(b.trim()))
@@ -90,6 +105,7 @@ function sanitizeHotel(hotel: any): any {
   };
 
   if (cleanedHotel.priceRange) {
+    cleanedHotel.priceRange = normalizeAiArtifact(cleanedHotel.priceRange);
     const match = cleanedHotel.priceRange.match(/\$?\s*(\d+)\s*[-–]\s*\$?\s*(\d+)/);
     cleanedHotel.priceRange = match ? `$${match[1]}-${match[2]}/night` : cleanedHotel.priceRange;
   }
