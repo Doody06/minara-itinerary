@@ -234,25 +234,6 @@ export default function ItineraryPage() {
               variant="outline"
               size="sm"
               className="gap-1"
-              onClick={async () => {
-                const shareData = {
-                  title: `${destinationLabel} Itinerary - MINARA`,
-                  url: window.location.href,
-                };
-                if (navigator.share) {
-                  try { await navigator.share(shareData); } catch {}
-                } else {
-                  await navigator.clipboard.writeText(window.location.href);
-                  toast.success("Link copied!");
-                }
-              }}
-            >
-              <Share2 className="w-4 h-4" /> Share
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1"
               onClick={() => {
                 if (currentItinerary.length && preferences) {
                   exportItineraryPdf(currentItinerary, preferences, hotel);
