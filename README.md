@@ -1,73 +1,73 @@
-# Welcome to your Lovable project
+# 🧭 Minara Islamic Iinerary generator (AI-Powered)
 
-## Project info
+An intelligent travel planning application designed specifically for Muslim travelers. This app uses AI to generate personalized, halal-friendly itineraries based on user preferences, destination, and travel goals—ensuring a smooth and worry-free experience.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## 🌍 Overview
 
-There are several ways of editing your application.
+Planning travel as a Muslim can involve additional considerations such as halal food availability, prayer facilities, and suitable accommodations. This project simplifies that process by generating complete itineraries tailored to those needs using AI.
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## ✨ Features
 
-Changes made via Lovable will be committed automatically to this repo.
+* 🤖 AI-generated travel itineraries
+* 🕌 Prayer-friendly scheduling (includes time for salah)
+* 🍽️ Halal restaurant recommendations
+* 🏨 Accommodation suggestions aligned with user preferences
+* 📍 Google map locations for all suggested places
+* ⚡ Fast, dynamic itinerary generation
+* 🔧Editable itineraries to suit user preferences  
+* 💵Takes into account the user's budget and calculates expected costs for each place.
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🚀 Project Info
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**Project URL:**
+https://minaraproto.lovable.app
 
-Follow these steps:
+---
+## How to use the website
+### Home page
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+![Home page](image.png)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Step 1: Pick your destination.
+![destination](image-1.png)
 
-# Step 3: Install the necessary dependencies.
-npm i
+Step 2: Enter your trip details.
+![trip details](image-2.png)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Step 3: Enter your traveller type.
+![traveller type](image-3.png)
 
-**Edit a file directly in GitHub**
+Step 4: Enter your interests.
+![interests](image-4.png)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Step 5: Enter your preferences
+![preferences](image-5.png) 
 
-**Use GitHub Codespaces**
+Step 6: Wait a little bit then enjoy your itinerary!
+![itinerary](image-6.png)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
+If you click on a place you can get more information
+![pop up card](image-7.png)
+## 🧱 Tech Stack
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+* **Vite**
+* **TypeScript**
+* **React**
+* **shadcn-ui**
+* **Tailwind CSS**
 
-## How can I deploy this project?
+and the help of Loveable AI!
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 📌 Vision
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This project aims to make travel more accessible and comfortable for Muslims worldwide by combining modern AI capabilities with culturally-aware planning.
