@@ -51,6 +51,16 @@ function sanitizeItinerary(data: any): any {
   if (!data) return data;
   if (data.days && Array.isArray(data.days)) {
     for (const day of data.days) {
+      if (typeof day.title === "string") {
+        day.title = day.title
+          .replace(LEAKED_FIELD_PATTERN, "")
+          .replace(/\{[^}]*$/, "")
+          .replace(/^[^{]*\}/, "")
+          .replace(/\[[^\]]*$/, "")
+          .replace(/^[^\[]*\]/, "")
+          .replace(/,\s*$/, "")
+          .trim();
+      }
       if (day.items && Array.isArray(day.items)) {
         day.items = day.items.map(sanitizeItineraryItem);
       }
