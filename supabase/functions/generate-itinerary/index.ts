@@ -84,6 +84,23 @@ function sanitizeHotel(hotel: any): any {
   return hotel;
 }
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+function parseDateOnlyAsUtc(dateString: string): Date {
+  const [year, month, day] = dateString.split("-").map(Number);
+  if (!year || !month || !day) {
+    throw new Error(`Invalid date: ${dateString}`);
+  }
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function calculateTripDays(startDate: string, endDate: string): number {
+  const start = parseDateOnlyAsUtc(startDate);
+  const end = parseDateOnlyAsUtc(endDate);
+  const diffInDays = Math.round((end.getTime() - start.getTime()) / MS_PER_DAY);
+  return Math.min(Math.max(1, diffInDays), 15);
+}
+
 // Helper: call AI gateway with retry
 async function callAIWithRetry(
   url: string,
@@ -188,12 +205,11 @@ serve(async (req) => {
     const places = placesResult.data || [];
     const hotels = hotelsResult.data || [];
 
-    // Calculate trip duration (inclusive of both start and end dates)
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const rawDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-    const days = Math.min(rawDays, 15);
-    console.log(`Trip duration: ${rawDays} days (capped to ${days}) (${startDate} to ${endDate})`);
+    // Calculate itinerary days using UTC calendar dates so DST/timezone shifts don't skew the count.
+    // The return date is treated primarily as a travel day, so a trip from Mar 26 to Mar 30 yields 4 days.
+    const rawDays = calculateTripDays(startDate, endDate);
+    const days = rawDays;
+    console.log(`Trip duration: ${rawDays} days (${startDate} to ${endDate})`);
 
     // Build the system prompt - keep it concise when DB has no data
     const hasDbData = places.length > 0 || hotels.length > 0;
