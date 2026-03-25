@@ -210,14 +210,15 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
 
       // Merge the adjusted day back into the full itinerary
       if (dayNumber && data.adjustedDay) {
+        const sanitizedDay = sanitizeDays([data.adjustedDay])[0];
         setItinerary(prev =>
-          (prev || []).map(d => d.day === dayNumber ? data.adjustedDay : d)
+          (prev || []).map(d => d.day === dayNumber ? sanitizedDay : d)
         );
       } else if (data.days) {
-        setItinerary(data.days);
+        setItinerary(sanitizeDays(data.days));
       }
 
-      if (data.hotel) setHotel(data.hotel);
+      if (data.hotel) setHotel(sanitizeHotelData(data.hotel));
     } catch (e: any) {
       const msg = e?.name === "AbortError"
         ? "Adjustment timed out. Try a simpler request."
