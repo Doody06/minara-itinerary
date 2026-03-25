@@ -134,8 +134,8 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
         throw new Error(data.error);
       }
 
-      setItinerary(data.days);
-      setHotel(data.hotel);
+      setItinerary(sanitizeDays(data.days));
+      setHotel(sanitizeHotelData(data.hotel));
       return true;
     } catch (e: any) {
       const msg = e?.name === "AbortError"
