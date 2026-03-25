@@ -200,9 +200,17 @@ Halal preferences: ${halalPreferences?.join(", ") || "Standard halal"}
 ${specificNeeds ? `Specific needs: ${specificNeeds}` : ""}`;
 
     if (quickAdjust) {
-      userPrompt += `\n\nQUICK ADJUSTMENT: "${quickAdjust}"
-Current itinerary: ${JSON.stringify(currentItinerary)}
-Modify based on the request. Keep structure, swap/add/remove items as needed.`;
+      userPrompt += `\n\nQUICK ADJUSTMENT REQUEST: "${quickAdjust}"
+
+Current itinerary (to modify): ${JSON.stringify(currentItinerary)}
+
+IMPORTANT ADJUSTMENT RULES:
+- Make DRAMATIC changes to match the adjustment request. Do NOT make only minor tweaks.
+- If the request is about food (e.g. "More Food-Focused"), replace MOST activities with restaurant visits, food tours, street food spots, food markets, and culinary experiences. At least 60-70% of items should be food-related.
+- If the request is about budget, significantly shift price ranges and venue selections.
+- If the request is about a theme (e.g. "More Islamic Sites"), replace most non-themed items with themed ones.
+- Keep prayer times and transport items. Replace activities and meals aggressively to match the request.
+- Maintain the same number of days and realistic timing.`;
     }
 
     // --- DETAILED ADJUST ---
