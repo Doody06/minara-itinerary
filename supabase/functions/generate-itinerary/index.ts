@@ -191,7 +191,7 @@ serve(async (req) => {
     // Calculate trip duration (inclusive of both start and end dates)
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const rawDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    const rawDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
     const days = Math.min(rawDays, 15);
     console.log(`Trip duration: ${rawDays} days (capped to ${days}) (${startDate} to ${endDate})`);
 
