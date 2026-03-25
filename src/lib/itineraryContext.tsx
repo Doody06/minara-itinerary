@@ -1,7 +1,49 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import type { DayPlan, Badge, HalalStatus } from "@/data/dummyData";
+import type { DayPlan, Badge, HalalStatus, ItineraryItem } from "@/data/dummyData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+
+// Client-side sanitization to strip any leaked LLM/JSON artifacts
+const LEAKED_FIELDS_RE = /[,;]\s*(?:type|badges|halalStatus|id|latitude|longitude|time|title|description|confidenceScore|explanation|cost|day|items|name|priceRange)\s*[:=].*/gi;
+const TRAILING_JSON_RE = /[\[{][^}\]]*$/;
+const LEADING_JSON_RE = /^[^{\[]*[}\]]/;
+const TRAILING_COMMA_RE = /,\s*$/;
+
+function cleanString(s: string): string {
+  return s
+    .replace(/\}\}.*finish_reason.*$/gi, "")
+    .replace(LEAKED_FIELDS_RE, "")
+    .replace(TRAILING_JSON_RE, "")
+    .replace(LEADING_JSON_RE, "")
+    .replace(TRAILING_COMMA_RE, "")
+    .replace(/[^\x00-\x7F\u00A0-\u00FF\u20AC\u00A3\u00A5]/g, "")
+    .trim();
+}
+
+function sanitizeItem(item: any): ItineraryItem {
+  if (typeof item.time === "string") item.time = cleanString(item.time);
+  if (typeof item.title === "string") item.title = cleanString(item.title);
+  if (typeof item.description === "string") item.description = cleanString(item.description);
+  if (typeof item.cost === "string") item.cost = cleanString(item.cost);
+  if (typeof item.explanation === "string") item.explanation = cleanString(item.explanation);
+  return item;
+}
+
+function sanitizeDays(days: any[]): DayPlan[] {
+  return days.map((day) => ({
+    ...day,
+    title: typeof day.title === "string" ? cleanString(day.title) : day.title,
+    items: Array.isArray(day.items) ? day.items.map(sanitizeItem) : day.items,
+  }));
+}
+
+function sanitizeHotelData(hotel: any) {
+  if (!hotel) return hotel;
+  if (typeof hotel.name === "string") hotel.name = cleanString(hotel.name);
+  if (typeof hotel.description === "string") hotel.description = cleanString(hotel.description);
+  if (typeof hotel.priceRange === "string") hotel.priceRange = cleanString(hotel.priceRange);
+  return hotel;
+}
 
 export interface TripPreferences {
   destination: string;
@@ -92,8 +134,8 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
         throw new Error(data.error);
       }
 
-      setItinerary(data.days);
-      setHotel(data.hotel);
+      setItinerary(sanitizeDays(data.days));
+      setHotel(sanitizeHotelData(data.hotel));
       return true;
     } catch (e: any) {
       const msg = e?.name === "AbortError"
@@ -168,14 +210,15 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
 
       // Merge the adjusted day back into the full itinerary
       if (dayNumber && data.adjustedDay) {
+        const sanitizedDay = sanitizeDays([data.adjustedDay])[0];
         setItinerary(prev =>
-          (prev || []).map(d => d.day === dayNumber ? data.adjustedDay : d)
+          (prev || []).map(d => d.day === dayNumber ? sanitizedDay : d)
         );
       } else if (data.days) {
-        setItinerary(data.days);
+        setItinerary(sanitizeDays(data.days));
       }
 
-      if (data.hotel) setHotel(data.hotel);
+      if (data.hotel) setHotel(sanitizeHotelData(data.hotel));
     } catch (e: any) {
       const msg = e?.name === "AbortError"
         ? "Adjustment timed out. Try a simpler request."

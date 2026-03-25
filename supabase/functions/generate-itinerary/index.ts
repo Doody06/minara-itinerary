@@ -31,21 +31,18 @@ const LEAKED_FIELD_PATTERN = /[,;]\s*(?:type|badges|halalStatus|id|latitude|long
 
 function sanitizeItineraryItem(item: any): any {
   if (!item || typeof item !== "object") return item;
-  if (typeof item.title === "string") {
-    item.title = item.title
-      .replace(LEAKED_FIELD_PATTERN, "")
-      .replace(/\{[^}]*$/, "")       // trailing partial JSON
-      .replace(/\}[^{]*$/, "")       // trailing closing brace junk
-      .replace(/,\s*$/, "")          // trailing comma
-      .trim();
-  }
-  if (typeof item.description === "string") {
-    item.description = item.description
-      .replace(LEAKED_FIELD_PATTERN, "")
-      .replace(/\{[^}]*$/, "")
-      .replace(/\}[^{]*$/, "")
-      .replace(/,\s*$/, "")
-      .trim();
+  const stringFields = ["title", "description", "time", "cost", "explanation"];
+  for (const field of stringFields) {
+    if (typeof item[field] === "string") {
+      item[field] = item[field]
+        .replace(LEAKED_FIELD_PATTERN, "")
+        .replace(/\{[^}]*$/, "")       // trailing partial JSON
+        .replace(/^[^{]*\}/, "")       // leading closing brace junk
+        .replace(/\[[^\]]*$/, "")      // trailing partial array
+        .replace(/^[^\[]*\]/, "")      // leading closing bracket junk
+        .replace(/,\s*$/, "")          // trailing comma
+        .trim();
+    }
   }
   return item;
 }
@@ -54,6 +51,16 @@ function sanitizeItinerary(data: any): any {
   if (!data) return data;
   if (data.days && Array.isArray(data.days)) {
     for (const day of data.days) {
+      if (typeof day.title === "string") {
+        day.title = day.title
+          .replace(LEAKED_FIELD_PATTERN, "")
+          .replace(/\{[^}]*$/, "")
+          .replace(/^[^{]*\}/, "")
+          .replace(/\[[^\]]*$/, "")
+          .replace(/^[^\[]*\]/, "")
+          .replace(/,\s*$/, "")
+          .trim();
+      }
       if (day.items && Array.isArray(day.items)) {
         day.items = day.items.map(sanitizeItineraryItem);
       }
