@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +23,43 @@ function sanitizeStrings(obj: any): any {
     return out;
   }
   return obj;
+}
+
+// Remove leaked structured fields from title/description strings
+// e.g. "Place Name,type:food,badges:[,halalStatus:verified,id:2-3,latitude:51..."
+const LEAKED_FIELD_PATTERN = /[,;]\s*(?:type|badges|halalStatus|id|latitude|longitude|time|title|description|confidenceScore|explanation|cost|day)\s*[:=].*/gi;
+
+function sanitizeItineraryItem(item: any): any {
+  if (!item || typeof item !== "object") return item;
+  if (typeof item.title === "string") {
+    item.title = item.title
+      .replace(LEAKED_FIELD_PATTERN, "")
+      .replace(/\{[^}]*$/, "")       // trailing partial JSON
+      .replace(/\}[^{]*$/, "")       // trailing closing brace junk
+      .replace(/,\s*$/, "")          // trailing comma
+      .trim();
+  }
+  if (typeof item.description === "string") {
+    item.description = item.description
+      .replace(LEAKED_FIELD_PATTERN, "")
+      .replace(/\{[^}]*$/, "")
+      .replace(/\}[^{]*$/, "")
+      .replace(/,\s*$/, "")
+      .trim();
+  }
+  return item;
+}
+
+function sanitizeItinerary(data: any): any {
+  if (!data) return data;
+  if (data.days && Array.isArray(data.days)) {
+    for (const day of data.days) {
+      if (day.items && Array.isArray(day.items)) {
+        day.items = day.items.map(sanitizeItineraryItem);
+      }
+    }
+  }
+  return data;
 }
 
 // Clean hotel price range to just "$X-Y/night" format
@@ -331,6 +368,7 @@ Apply across entire itinerary.`;
     }
 
     const itineraryData = sanitizeStrings(result.data);
+    sanitizeItinerary(itineraryData);
     if (itineraryData.hotel) itineraryData.hotel = sanitizeHotel(itineraryData.hotel);
 
     // For detailed adjust targeting a single day, return immediately
