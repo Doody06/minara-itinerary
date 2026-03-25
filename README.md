@@ -3,11 +3,12 @@
 An intelligent travel planning application designed specifically for Muslim travelers. This app uses AI to generate personalized, halal-friendly itineraries based on user preferences, destination, and travel goals—ensuring a smooth and worry-free experience.
 
 ---
+## 💭Problem Statement
+Muslims travelling around the world often face challenges in finding suitable environments, and it is an all-too common occurence that a muslim individual or familty will visit a place, only to find that the food, service, or environment is not halal or suitable for muslims.
 
 ## 🌍 Overview
 
-Planning travel as a Muslim can involve additional considerations such as halal food availability, prayer facilities, and suitable accommodations. This project simplifies that process by generating complete itineraries tailored to those needs using AI.
-
+Taking into consideration important things like halal food availability, prayer facilities, and suitable accommodations,  This web app uses AI to help muslims quickly obtain an itinerary that suits their travel needs, preferences, and interests.
 ---
 
 ## ✨ Features
