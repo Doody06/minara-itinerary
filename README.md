@@ -4,7 +4,7 @@ An intelligent travel planning application designed specifically for Muslim trav
 
 ---
 ## 💭Problem Statement
-Muslims travelling around the world often face challenges in finding suitable environments, and it is an all-too common occurence that a muslim individual or familty will visit a place, only to find that the food, service, or environment is not halal or suitable for muslims.
+Muslims travelling around the world often face challenges in finding suitable environments, and it is an all-too common occurrence that a Muslim individual or family will visit a destination, only to find that the food, services, or overall setting are not halal or appropriate for their needs.
 
 ## 🌍 Overview
 
