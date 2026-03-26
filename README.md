@@ -53,6 +53,10 @@ Step 5: Enter your preferences.
 Step 6: Wait a little bit, then enjoy your itinerary!
 <img width="1337" height="748" alt="itinerary" src="https://github.com/user-attachments/assets/652b0799-a7b2-486f-8ab2-b689f74bdbca" />
 
+In case you face any issues, click the regenerate button and they should be fixed.
+<img width="1893" height="825" alt="image" src="https://github.com/user-attachments/assets/6501dc34-330d-4773-85fd-0c23ca9258ff" />
+
+
 
 If you click on a place, you can get more information.
 ![pop up card](image-7.png)
