@@ -97,7 +97,7 @@ function parseDateOnlyAsUtc(dateString: string): Date {
 function calculateTripDays(startDate: string, endDate: string): number {
   const start = parseDateOnlyAsUtc(startDate);
   const end = parseDateOnlyAsUtc(endDate);
-  const diffInDays = Math.round((end.getTime() - start.getTime()) / MS_PER_DAY);
+  const diffInDays = Math.round((end.getTime() - start.getTime()) / MS_PER_DAY) + 1;
   return Math.min(Math.max(1, diffInDays), 15);
 }
 
