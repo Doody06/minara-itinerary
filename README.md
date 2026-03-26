@@ -55,10 +55,12 @@ Step 6: Wait a little bit, then enjoy your itinerary!
 
 If you click on a place, you can get more information.
 ![pop up card](image-7.png)
-## 🧱 Tech Stack
 
 In case you face any issues, click the regenerate button and they should be fixed.
 <img width="1893" height="825" alt="image" src="https://github.com/user-attachments/assets/6501dc34-330d-4773-85fd-0c23ca9258ff" />
+
+
+## 🧱 Tech Stack
 This project is built with:
 
 * **Vite**
