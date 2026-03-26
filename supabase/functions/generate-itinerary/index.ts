@@ -41,6 +41,8 @@ function sanitizeItineraryItem(item: any): any {
         .replace(/\[[^\]]*$/, "")      // trailing partial array
         .replace(/^[^\[]*\]/, "")      // leading closing bracket junk
         .replace(/,\s*$/, "")          // trailing comma
+        .replace(/(?:Base)+\s*$/g, "") // strip trailing "Base" repetitions leaked by LLM
+        .replace(/(?:Base){2,}/g, "")  // strip inline "BaseBase..." repetitions
         .trim();
     }
   }
