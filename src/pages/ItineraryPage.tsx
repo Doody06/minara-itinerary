@@ -243,17 +243,14 @@ export default function ItineraryPage() {
             >
               <Download className="w-4 h-4" /> Export
             </Button>
-            <div className="flex flex-col items-end gap-1">
-              <span className="text-xs text-muted-foreground">Seeing an issue? Try regenerating</span>
-              <Button
-                size="sm"
-                className="gap-1 bg-primary text-primary-foreground"
-                onClick={handleRegenerate}
-                disabled={isGenerating}
-              >
-                <RotateCcw className="w-4 h-4" /> Regenerate
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              className="gap-1 bg-primary text-primary-foreground"
+              onClick={handleRegenerate}
+              disabled={isGenerating}
+            >
+              <RotateCcw className="w-4 h-4" /> Regenerate
+            </Button>
           </div>
         </div>
 
