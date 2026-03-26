@@ -17,6 +17,8 @@ function cleanString(s: string): string {
     .replace(LEADING_JSON_RE, "")
     .replace(TRAILING_COMMA_RE, "")
     .replace(/[^\x00-\x7F\u00A0-\u00FF\u20AC\u00A3\u00A5]/g, "")
+    .replace(/(?:Base)+\s*$/g, "") // strip trailing "Base" repetitions leaked by LLM
+    .replace(/(?:Base){2,}/g, "")  // strip inline "BaseBase..." repetitions
     .trim();
 }
 
