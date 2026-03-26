@@ -27,7 +27,7 @@ Taking into consideration important things like halal food availability, prayer 
 ## 🚀 Project Info
 
 **Project URL:**
-[[https://minaraproto.lovable.app](https://minaraproto.lovable.app)
+[[https://minaraproto.lovable.app](https://minaraproto.lovable.app)]
 
 ---
 ## How to Use the Website
