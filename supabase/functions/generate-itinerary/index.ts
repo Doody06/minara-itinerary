@@ -1,90 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { sanitizeStrings, sanitizeItinerary, sanitizeHotel } from "./sanitizers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-// Strip stray non-ASCII characters (CJK, etc.) that the model occasionally injects
-// Also strip leaked LLM artifacts like "}}finish_reason:" or field names leaking into values
-function sanitizeStrings(obj: any): any {
-  if (typeof obj === "string") {
-    return obj
-      .replace(/\}\}.*finish_reason.*$/gi, "")  // strip leaked LLM finish artifacts
-      .replace(/[^\x00-\x7F\u00A0-\u00FF\u20AC\u00A3\u00A5]/g, "")
-      .trim();
-  }
-  if (Array.isArray(obj)) return obj.map(sanitizeStrings);
-  if (obj && typeof obj === "object") {
-    const out: any = {};
-    for (const [k, v] of Object.entries(obj)) out[k] = sanitizeStrings(v);
-    return out;
-  }
-  return obj;
-}
-
-// Remove leaked structured fields from title/description strings
-// e.g. "Place Name,type:food,badges:[,halalStatus:verified,id:2-3,latitude:51..."
-const LEAKED_FIELD_PATTERN = /[,;]\s*(?:type|badges|halalStatus|id|latitude|longitude|time|title|description|confidenceScore|explanation|cost|day)\s*[:=].*/gi;
-
-function sanitizeItineraryItem(item: any): any {
-  if (!item || typeof item !== "object") return item;
-  const stringFields = ["title", "description", "time", "cost", "explanation"];
-  for (const field of stringFields) {
-    if (typeof item[field] === "string") {
-      item[field] = item[field]
-        .replace(LEAKED_FIELD_PATTERN, "")
-        .replace(/\{[^}]*$/, "")       // trailing partial JSON
-        .replace(/^[^{]*\}/, "")       // leading closing brace junk
-        .replace(/\[[^\]]*$/, "")      // trailing partial array
-        .replace(/^[^\[]*\]/, "")      // leading closing bracket junk
-        .replace(/,\s*$/, "")          // trailing comma
-        .replace(/(?:Base)+\s*$/g, "") // strip trailing "Base" repetitions leaked by LLM
-        .replace(/(?:Base){2,}/g, "")  // strip inline "BaseBase..." repetitions
-        .trim();
-    }
-  }
-  return item;
-}
-
-function sanitizeItinerary(data: any): any {
-  if (!data) return data;
-  if (data.days && Array.isArray(data.days)) {
-    for (const day of data.days) {
-      if (typeof day.title === "string") {
-        day.title = day.title
-          .replace(LEAKED_FIELD_PATTERN, "")
-          .replace(/\{[^}]*$/, "")
-          .replace(/^[^{]*\}/, "")
-          .replace(/\[[^\]]*$/, "")
-          .replace(/^[^\[]*\]/, "")
-          .replace(/,\s*$/, "")
-          .trim();
-      }
-      if (day.items && Array.isArray(day.items)) {
-        day.items = day.items.map(sanitizeItineraryItem);
-      }
-    }
-  }
-  return data;
-}
-
-// Clean hotel price range to just "$X-Y/night" format
-function sanitizeHotel(hotel: any): any {
-  if (!hotel) return hotel;
-  // Clean name: remove any ",priceRange:" or similar field leaks
-  if (hotel.name) {
-    hotel.name = hotel.name.replace(/[,;]?\s*priceRange\s*:.*$/i, "").trim();
-  }
-  // Normalize priceRange to just "$X-Y/night"
-  if (hotel.priceRange) {
-    const match = hotel.priceRange.match(/\$?\s*(\d+)\s*[-–]\s*\$?\s*(\d+)/);
-    hotel.priceRange = match ? `$${match[1]}-${match[2]}/night` : hotel.priceRange;
-  }
-  return hotel;
-}
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -215,12 +137,12 @@ serve(async (req) => {
 
     // Build the system prompt - keep it concise when DB has no data
     const hasDbData = places.length > 0 || hotels.length > 0;
-    
+
     let dbSection = "";
     if (places.length > 0) {
       // Only send essential fields to reduce prompt size
       const slimPlaces = places.map((p: any) => ({
-        name: p.name, type: p.type, area: p.area, halal_status: p.halal_status, 
+        name: p.name, type: p.type, area: p.area, halal_status: p.halal_status,
         badges: p.badges, cost_range: p.cost_range, confidence_score: p.confidence_score,
         latitude: p.latitude, longitude: p.longitude
       }));
@@ -392,7 +314,7 @@ Apply across entire itinerary.`;
       );
     }
 
-    const itineraryData = sanitizeStrings(result.data);
+    const itineraryData = sanitizeStrings(result.data) as any;
     sanitizeItinerary(itineraryData);
     if (itineraryData.hotel) itineraryData.hotel = sanitizeHotel(itineraryData.hotel);
 
