@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useRef, type ReactNode } from "react";
 import type { DayPlan, Badge, HalalStatus, ItineraryItem } from "@/data/dummyData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -128,17 +128,20 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDetailedAdjusting, setIsDetailedAdjusting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Incremented on every generation/quick-adjust call. Used to discard stale responses.
+  const generateTokenRef = useRef(0);
+  const detailTokenRef = useRef(0);
 
   const callGenerateFunction = async (
     prefs: TripPreferences,
     quickAdjustLabel?: string,
     currentItinerary?: DayPlan[]
   ) => {
+    const token = ++generateTokenRef.current;
     setIsGenerating(true);
     setError(null);
 
     try {
-      // Create an AbortController with a 120s timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 120000);
 
@@ -158,10 +161,14 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
             quickAdjust: quickAdjustLabel || undefined,
             currentItinerary: currentItinerary || undefined,
           },
-        }
+          signal: controller.signal,
+        } as any
       );
 
       clearTimeout(timeoutId);
+
+      // A newer call has already started — discard this response.
+      if (token !== generateTokenRef.current) return false;
 
       // supabase.functions.invoke returns fnError for non-2xx but data may contain the real message
       if (fnError) {
@@ -182,6 +189,7 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
       }
       return true;
     } catch (e: any) {
+      if (token !== generateTokenRef.current) return false;
       const msg = e?.name === "AbortError"
         ? "Generation timed out. Try a shorter trip or simpler preferences."
         : (e?.message || "Failed to generate itinerary");
@@ -193,7 +201,7 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
       });
       return false;
     } finally {
-      setIsGenerating(false);
+      if (token === generateTokenRef.current) setIsGenerating(false);
     }
   };
 
@@ -214,6 +222,7 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
 
   const detailedAdjustFn = async (instruction: string, dayNumber?: number, itemId?: string) => {
     if (!preferences || !itinerary) return;
+    const token = ++detailTokenRef.current;
     setIsDetailedAdjusting(true);
     setError(null);
 
@@ -244,10 +253,13 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
               targetDay: targetDay || undefined,
             },
           },
-        }
+          signal: controller.signal,
+        } as any
       );
 
       clearTimeout(timeoutId);
+
+      if (token !== detailTokenRef.current) return;
 
       if (fnError) throw new Error(fnError.message || "Failed to adjust itinerary");
       if (data?.error) throw new Error(data.error);
@@ -269,13 +281,14 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
         setHotel(sanitizeHotelData(data.hotel));
       }
     } catch (e: any) {
+      if (token !== detailTokenRef.current) return;
       const msg = e?.name === "AbortError"
         ? "Adjustment timed out. Try a simpler request."
         : (e?.message || "Failed to adjust itinerary");
       setError(msg);
       toast({ title: "Adjustment failed", description: msg, variant: "destructive" });
     } finally {
-      setIsDetailedAdjusting(false);
+      if (token === detailTokenRef.current) setIsDetailedAdjusting(false);
     }
   };
 
