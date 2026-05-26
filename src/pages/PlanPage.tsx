@@ -60,6 +60,14 @@ export default function PlanPage() {
 
   const today = new Date().toISOString().split("T")[0];
 
+  const tripDays =
+    form.startDate && form.endDate
+      ? Math.round(
+          (new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) /
+            86400000
+        ) + 1
+      : 0;
+
   const dateErrors = {
     startDate: form.startDate && form.startDate < today
       ? "Outbound date cannot be before today."
@@ -68,7 +76,9 @@ export default function PlanPage() {
       ? "Return date cannot be before the outbound date."
       : form.endDate && form.endDate < today
         ? "Return date cannot be before today."
-        : "",
+        : tripDays > 15
+          ? "Trips cannot exceed 15 days."
+          : "",
   };
 
   const canNext = () => {
