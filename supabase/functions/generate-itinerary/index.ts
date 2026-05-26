@@ -137,12 +137,12 @@ serve(async (req) => {
 
     // Build the system prompt - keep it concise when DB has no data
     const hasDbData = places.length > 0 || hotels.length > 0;
-    
+
     let dbSection = "";
     if (places.length > 0) {
       // Only send essential fields to reduce prompt size
       const slimPlaces = places.map((p: any) => ({
-        name: p.name, type: p.type, area: p.area, halal_status: p.halal_status, 
+        name: p.name, type: p.type, area: p.area, halal_status: p.halal_status,
         badges: p.badges, cost_range: p.cost_range, confidence_score: p.confidence_score,
         latitude: p.latitude, longitude: p.longitude
       }));
@@ -314,7 +314,7 @@ Apply across entire itinerary.`;
       );
     }
 
-    const itineraryData = sanitizeStrings(result.data);
+    const itineraryData = sanitizeStrings(result.data) as any;
     sanitizeItinerary(itineraryData);
     if (itineraryData.hotel) itineraryData.hotel = sanitizeHotel(itineraryData.hotel);
 
