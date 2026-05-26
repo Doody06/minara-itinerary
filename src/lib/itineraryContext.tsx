@@ -12,7 +12,7 @@ const TRAILING_COMMA_RE = /,\s*$/;
 // This preserves Arabic, Turkish, Malay, Japanese, and all other Unicode text.
 const CONTROL_CHARS_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g;
 
-function cleanString(s: string): string {
+export function cleanString(s: string): string {
   return s
     .replace(/\}\}.*finish_reason.*$/gi, "")
     .replace(LEAKED_FIELDS_RE, "")
@@ -54,7 +54,7 @@ function sanitizeHotelData(hotel: any) {
 // Type guards — contract-aligned; used before every state update
 // ---------------------------------------------------------------------------
 
-function isValidDayPlan(d: unknown): d is import("@/data/dummyData").DayPlan {
+export function isValidDayPlan(d: unknown): d is import("@/data/dummyData").DayPlan {
   return (
     d != null &&
     typeof d === "object" &&
@@ -66,11 +66,11 @@ function isValidDayPlan(d: unknown): d is import("@/data/dummyData").DayPlan {
   );
 }
 
-function isValidDays(days: unknown): days is import("@/data/dummyData").DayPlan[] {
+export function isValidDays(days: unknown): days is import("@/data/dummyData").DayPlan[] {
   return Array.isArray(days) && days.length > 0 && days.every(isValidDayPlan);
 }
 
-function isValidHotel(h: unknown): h is HotelSuggestion {
+export function isValidHotel(h: unknown): h is HotelSuggestion {
   return (
     h != null &&
     typeof h === "object" &&
