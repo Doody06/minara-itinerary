@@ -12,20 +12,9 @@ const typeLabels: Record<string, { label: string; icon: React.ElementType }> = {
   hotel: { label: "Hotel / Accommodation", icon: Hotel },
 };
 
-function openMaps(url: string) {
-  // Attempt a new tab first (preferred UX)
-  const popup = window.open(url, "_blank", "noopener,noreferrer");
-
-  // If popups/new tabs are blocked (common in embedded previews),
-  // try top-level navigation.
-  if (!popup) {
-    // You can set location of window.top without reading its properties.
-    window.top?.location.assign(url);
-  }
-}
-
 function getMapEmbedUrl(title: string, destination?: string, lat?: number, lng?: number): string {
-  if (lat && lng) {
+  // Use coordinates when present (even if zero — equator/prime-meridian is a valid location).
+  if (lat != null && lng != null) {
     return `https://www.google.com/maps?q=${lat},${lng}&output=embed`;
   }
   const query = encodeURIComponent(`${title}${destination ? ` ${destination}` : ""}`);
@@ -104,8 +93,8 @@ export function PlaceDetailDialog({ item, open, onOpenChange, destination }: Pla
             </div>
           )}
 
-          {/* Low confidence note */}
-          {item.confidenceScore && item.confidenceScore < 70 && item.explanation && (
+          {/* Low confidence note — use != null so confidenceScore 0 still triggers */}
+          {item.confidenceScore != null && item.confidenceScore < 70 && item.explanation && (
             <div className="bg-muted rounded-lg p-3 text-sm text-muted-foreground">
               <span className="font-medium text-foreground">Note: </span>
               {item.explanation}
