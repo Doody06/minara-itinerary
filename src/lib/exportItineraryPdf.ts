@@ -2,10 +2,20 @@ import jsPDF from "jspdf";
 import type { DayPlan } from "@/data/dummyData";
 import type { TripPreferences, HotelSuggestion } from "@/lib/itineraryContext";
 
-// Strip characters outside jsPDF's WinAnsi/CP1252 range to prevent garbled rendering
+// jsPDF uses WinAnsi/CP1252 \u2014 strip characters outside that range to prevent garbled output.
 function sanitize(text: string): string {
-  // Keep printable ASCII + common Latin-1 Supplement (accented chars, currency symbols)
   return text.replace(/[^\x20-\x7E\u00A0-\u00FF]/g, "").trim();
+}
+
+// Estimate the vertical space (mm) one itinerary item will consume so we can
+// decide whether to add a new page before rendering it.
+function estimateItemHeight(doc: jsPDF, item: DayPlan["items"][number], contentW: number): number {
+  let h = 7; // time + title row
+  const desc = doc.splitTextToSize(sanitize(item.description), contentW - 42);
+  h += Math.min(desc.length, 2) * 3.5;
+  if (item.badges.length > 0) h += 5;
+  h += 6; // separator
+  return h;
 }
 
 export function exportItineraryPdf(
@@ -28,7 +38,6 @@ export function exportItineraryPdf(
   const dark = [30, 30, 30] as const;
   const muted = [120, 120, 120] as const;
   const gold = [180, 130, 20] as const;
-  const lightBg = [245, 248, 245] as const;
 
   // ── Helpers ──
   const setColor = (c: readonly [number, number, number]) =>
@@ -114,7 +123,19 @@ export function exportItineraryPdf(
     y += 16;
 
     for (const item of day.items) {
-      if (y > pageH - 20) break;
+      // Paginate: if the next item won't fit, open a new page with a continuation header.
+      const needed = estimateItemHeight(doc, item, contentW);
+      if (y + needed > pageH - 15) {
+        doc.addPage();
+        y = 14;
+        doc.setFillColor(emerald[0], emerald[1], emerald[2]);
+        doc.roundedRect(marginX, y - 4, contentW, 10, 2, 2, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(255, 255, 255);
+        doc.text(sanitize(`Day ${day.day}: ${day.title} (cont.)`), marginX + 3, y + 2);
+        y += 12;
+      }
 
       // Time + Type tag
       setColor(emerald as unknown as readonly [number, number, number]);
