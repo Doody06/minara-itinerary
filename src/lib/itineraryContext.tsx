@@ -8,6 +8,9 @@ const LEAKED_FIELDS_RE = /[,;]\s*(?:type|badges|halalStatus|id|latitude|longitud
 const TRAILING_JSON_RE = /[\[{][^}\]]*$/;
 const LEADING_JSON_RE = /^[^{\[]*[}\]]/;
 const TRAILING_COMMA_RE = /,\s*$/;
+// Strip only C0/C1 control chars (except \t=0x09, \n=0x0A, \r=0x0D).
+// This preserves Arabic, Turkish, Malay, Japanese, and all other Unicode text.
+const CONTROL_CHARS_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g;
 
 function cleanString(s: string): string {
   return s
@@ -16,9 +19,9 @@ function cleanString(s: string): string {
     .replace(TRAILING_JSON_RE, "")
     .replace(LEADING_JSON_RE, "")
     .replace(TRAILING_COMMA_RE, "")
-    .replace(/[^\x00-\x7F\u00A0-\u00FF\u20AC\u00A3\u00A5]/g, "")
-    .replace(/(?:Base)+\s*$/g, "") // strip trailing "Base" repetitions leaked by LLM
-    .replace(/(?:Base){2,}/g, "")  // strip inline "BaseBase..." repetitions
+    .replace(CONTROL_CHARS_RE, "")
+    .replace(/(?:Base)+\s*$/g, "")
+    .replace(/(?:Base){2,}/g, "")
     .trim();
 }
 
@@ -45,6 +48,40 @@ function sanitizeHotelData(hotel: any) {
   if (typeof hotel.description === "string") hotel.description = cleanString(hotel.description);
   if (typeof hotel.priceRange === "string") hotel.priceRange = cleanString(hotel.priceRange);
   return hotel;
+}
+
+// ---------------------------------------------------------------------------
+// Type guards — contract-aligned; used before every state update
+// ---------------------------------------------------------------------------
+
+function isValidDayPlan(d: unknown): d is import("@/data/dummyData").DayPlan {
+  return (
+    d != null &&
+    typeof d === "object" &&
+    typeof (d as any).day === "number" &&
+    typeof (d as any).title === "string" &&
+    (d as any).title.length > 0 &&
+    Array.isArray((d as any).items) &&
+    (d as any).items.length > 0
+  );
+}
+
+function isValidDays(days: unknown): days is import("@/data/dummyData").DayPlan[] {
+  return Array.isArray(days) && days.length > 0 && days.every(isValidDayPlan);
+}
+
+function isValidHotel(h: unknown): h is HotelSuggestion {
+  return (
+    h != null &&
+    typeof h === "object" &&
+    typeof (h as any).name === "string" &&
+    (h as any).name.length > 0 &&
+    typeof (h as any).description === "string" &&
+    Array.isArray((h as any).badges) &&
+    typeof (h as any).halalStatus === "string" &&
+    typeof (h as any).confidenceScore === "number" &&
+    typeof (h as any).priceRange === "string"
+  );
 }
 
 export interface TripPreferences {
@@ -136,8 +173,13 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
         throw new Error(data.error);
       }
 
+      if (!isValidDays(data?.days)) {
+        throw new Error("AI returned an invalid itinerary. Your existing plan has been preserved.");
+      }
       setItinerary(sanitizeDays(data.days));
-      setHotel(sanitizeHotelData(data.hotel));
+      if (isValidHotel(data.hotel)) {
+        setHotel(sanitizeHotelData(data.hotel));
+      }
       return true;
     } catch (e: any) {
       const msg = e?.name === "AbortError"
@@ -210,17 +252,22 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
       if (fnError) throw new Error(fnError.message || "Failed to adjust itinerary");
       if (data?.error) throw new Error(data.error);
 
-      // Merge the adjusted day back into the full itinerary
-      if (dayNumber && data.adjustedDay) {
+      if (dayNumber) {
+        if (!isValidDayPlan(data?.adjustedDay) || (data.adjustedDay as any).day !== dayNumber) {
+          throw new Error("AI returned an invalid day adjustment. Your existing plan has been preserved.");
+        }
         const sanitizedDay = sanitizeDays([data.adjustedDay])[0];
-        setItinerary(prev =>
-          (prev || []).map(d => d.day === dayNumber ? sanitizedDay : d)
-        );
-      } else if (data.days) {
+        setItinerary(prev => (prev || []).map(d => d.day === dayNumber ? sanitizedDay : d));
+      } else {
+        if (!isValidDays(data?.days)) {
+          throw new Error("AI returned an invalid itinerary. Your existing plan has been preserved.");
+        }
         setItinerary(sanitizeDays(data.days));
       }
 
-      if (data.hotel) setHotel(sanitizeHotelData(data.hotel));
+      if (isValidHotel(data?.hotel)) {
+        setHotel(sanitizeHotelData(data.hotel));
+      }
     } catch (e: any) {
       const msg = e?.name === "AbortError"
         ? "Adjustment timed out. Try a simpler request."
