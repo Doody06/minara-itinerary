@@ -1,6 +1,11 @@
 ﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { sanitizeStrings, sanitizeItinerary, sanitizeHotel } from "./sanitizers.ts";
+import {
+  isValidFullResponse,
+  isValidTargetedAdjustResponse,
+  isValidHotel,
+} from "./validators.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,10 +34,17 @@ function calculateTripDays(startDate: string, endDate: string): number {
 async function callAIWithRetry(
   url: string,
   headers: Record<string, string>,
-  body: any,
-  maxRetries = 2
-): Promise<any> {
+  body: unknown,
+  maxRetries = 2,
+  validate: (data: unknown) => boolean = () => true
+): Promise<
+  | { success: true; data: unknown }
+  | { rateLimited: true; status: 429 }
+  | { paymentRequired: true; status: 402 }
+  | { invalidResponse: true }
+> {
   let lastError: Error | null = null;
+  let gotInvalidResponse = false;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     if (attempt > 0) {
       console.log(`Retry attempt ${attempt}...`);
@@ -67,12 +79,21 @@ async function callAIWithRetry(
         continue; // retry
       }
 
-      return { success: true, data: JSON.parse(toolCall.function.arguments) };
+      const parsed = JSON.parse(toolCall.function.arguments);
+      if (!validate(parsed)) {
+        console.warn(`Validation failed (attempt ${attempt}): AI response shape invalid`);
+        gotInvalidResponse = true;
+        lastError = new Error("AI response failed validation");
+        continue; // retry
+      }
+
+      return { success: true, data: parsed };
     } catch (e) {
       console.error(`Fetch error (attempt ${attempt}):`, e);
       lastError = e instanceof Error ? e : new Error(String(e));
     }
   }
+  if (gotInvalidResponse) return { invalidResponse: true };
   throw lastError || new Error("AI call failed after retries");
 }
 
@@ -290,39 +311,65 @@ Apply across entire itinerary.`;
       },
     };
 
+    // Choose validator based on request mode
+    const validate = isDetailedAdjust && detailedAdjustDayNumber
+      ? isValidTargetedAdjustResponse
+      : isValidFullResponse;
+
     // Call AI with retry - use fast model for speed
-    const result = await callAIWithRetry(aiUrl, aiHeaders, {
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      tools: [toolSchema],
-      tool_choice: { type: "function", function: { name: "generate_itinerary" } },
-    });
+    const result = await callAIWithRetry(
+      aiUrl,
+      aiHeaders,
+      {
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        tools: [toolSchema],
+        tool_choice: { type: "function", function: { name: "generate_itinerary" } },
+      },
+      2,
+      validate
+    );
 
     if (result.rateLimited) {
       return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+        JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment.", code: "RATE_LIMITED", retryable: true }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     if (result.paymentRequired) {
       return new Response(
-        JSON.stringify({ error: "AI usage limit reached. Please add credits." }),
+        JSON.stringify({ error: "AI usage limit reached. Please add credits.", code: "PAYMENT_REQUIRED", retryable: false }),
         { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    if (result.invalidResponse) {
+      return new Response(
+        JSON.stringify({ error: "AI did not return a valid itinerary.", code: "INVALID_RESPONSE", retryable: true }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    const itineraryData = sanitizeStrings(result.data) as any;
+    const itineraryData = sanitizeStrings(result.data) as Record<string, unknown>;
     sanitizeItinerary(itineraryData);
-    if (itineraryData.hotel) itineraryData.hotel = sanitizeHotel(itineraryData.hotel);
+
+    // Validate hotel separately — a malformed hotel must not block valid days
+    if (itineraryData.hotel !== undefined) {
+      const sanitized = sanitizeHotel(itineraryData.hotel);
+      itineraryData.hotel = isValidHotel(sanitized) ? sanitized : null;
+      if (!isValidHotel(sanitized)) {
+        console.warn("Hotel validation failed — returning hotel: null to preserve existing hotel in client state");
+      }
+    }
 
     // For detailed adjust targeting a single day, return immediately
-    if (isDetailedAdjust && detailedAdjustDayNumber && itineraryData.days?.length > 0) {
-      const adjustedDay = itineraryData.days.find((d: any) => d.day === detailedAdjustDayNumber) || itineraryData.days[0];
+    if (isDetailedAdjust && detailedAdjustDayNumber) {
+      const days = itineraryData.days as Array<Record<string, unknown>>;
+      const adjustedDay = days.find((d) => d.day === detailedAdjustDayNumber) ?? days[0];
       adjustedDay.day = detailedAdjustDayNumber;
-      return new Response(JSON.stringify({ adjustedDay, hotel: itineraryData.hotel }), {
+      return new Response(JSON.stringify({ adjustedDay, hotel: itineraryData.hotel ?? null }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

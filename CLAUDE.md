@@ -13,7 +13,12 @@ npm run test:watch   # Run tests in watch mode
 ```
 
 To run a single test file: `npx vitest run src/test/place-detail-dialog.test.tsx`
+#Claude behaviour
 
+1.Work iteritevely until you reach your goal, trying new methods one one doesn't work.
+2.Use test-driven-development to reach your goals.
+3.Do not hide confusion, always ask questions when needed.
+4.Use powershell or git bash.
 ## Architecture
 
 **Minara** is an AI-powered halal travel itinerary generator for Muslim travelers targeting 5 destinations (Istanbul, Dubai, London, Tokyo, and Kuala Lumpur).
