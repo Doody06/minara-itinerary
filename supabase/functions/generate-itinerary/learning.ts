@@ -1,7 +1,17 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { normalizeConfidenceScore } from "./learning-utils.ts";
+
+export { normalizeConfidenceScore };
 
 export async function learnNewPlaces(
-  newPlaces: { title: string; type: string }[],
+  newPlaces: {
+    title: string;
+    type: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    halal_status?: string | null;
+    cost?: string | null;
+  }[],
   newHotel: any | null,
   destination: string,
   aiUrl: string,
@@ -15,7 +25,13 @@ export async function learnNewPlaces(
   );
 
   const researchItems = [
-    ...newPlaces.map((p) => `${p.title} (type: ${p.type})`),
+    ...newPlaces.map((p) => {
+      let line = `${p.title} (type: ${p.type}`;
+      if (p.latitude) line += `, coords: ${p.latitude},${p.longitude}`;
+      if (p.halal_status) line += `, known halal: ${p.halal_status}`;
+      if (p.cost) line += `, cost: ${p.cost}`;
+      return line + ")";
+    }),
     ...(newHotel ? [`${newHotel.name} (type: hotel)`] : []),
   ];
 
@@ -102,7 +118,7 @@ export async function learnNewPlaces(
       name: p.name, description: p.description, type: p.type, destination,
       area: p.area || null, halal_status: p.halal_status || "needs-check",
       badges: p.badges || [], tags: p.tags || [],
-      confidence_score: Math.round(Number(p.confidence_score) || 60),
+      confidence_score: normalizeConfidenceScore(p.confidence_score),
       cost_range: p.cost_range || null,
       latitude: p.latitude || null, longitude: p.longitude || null,
     }));
@@ -116,7 +132,7 @@ export async function learnNewPlaces(
       name: h.name, description: h.description, destination,
       area: h.area || null, halal_status: h.halal_status || "needs-check",
       badges: h.badges || [], tags: h.tags || [],
-      confidence_score: Math.round(Number(h.confidence_score) || 60),
+      confidence_score: normalizeConfidenceScore(h.confidence_score),
       price_range: h.price_range || null, star_rating: h.star_rating ? Math.round(Number(h.star_rating)) : null,
     }));
     const { error } = await supabaseAdmin.from("hotels").upsert(hotelsToInsert, { onConflict: "name,destination", ignoreDuplicates: true });

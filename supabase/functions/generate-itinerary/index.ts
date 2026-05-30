@@ -113,11 +113,9 @@ serve(async (req) => {
     };
     const aiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-    // Query places from DB
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!
-    );
+    // Query places from DB — prefer service-role key for RLS-bypassing reads
+    const dbKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, dbKey);
 
     const [placesResult, hotelsResult] = await Promise.all([
       supabase.from("places").select("*").eq("destination", destination),
@@ -221,16 +219,28 @@ serve(async (req) => {
     }
 
     // Return itinerary immediately, then learn new places in background
-    const responseBody = JSON.stringify(itineraryData);
+    const usedDb = places.length > 0 || hotels.length > 0;
+    const responseBody = JSON.stringify({ ...itineraryData, meta: { usedDb } });
 
     const existingPlaceNames = new Set(places.map((p: any) => p.name.toLowerCase()));
     const existingHotelNames = new Set(hotels.map((h: any) => h.name.toLowerCase()));
 
-    const newPlaceItems: { title: string; type: string }[] = [];
+    const newPlaceItems: {
+      title: string; type: string;
+      latitude?: number | null; longitude?: number | null;
+      halal_status?: string | null; cost?: string | null;
+    }[] = [];
     for (const day of itineraryData.days || []) {
       for (const item of day.items || []) {
         if (item.type !== "transport" && !existingPlaceNames.has(item.title.toLowerCase())) {
-          newPlaceItems.push({ title: item.title, type: item.type });
+          newPlaceItems.push({
+            title: item.title,
+            type: item.type,
+            latitude: item.latitude ?? null,
+            longitude: item.longitude ?? null,
+            halal_status: item.halalStatus ?? null,
+            cost: item.cost ?? null,
+          });
         }
       }
     }
@@ -240,6 +250,10 @@ serve(async (req) => {
     if (uniqueNewPlaces.length > 0 || hotelIsNew) {
       const learnPromise = learnNewPlaces(uniqueNewPlaces, hotelIsNew ? itineraryData.hotel : null, destination, aiUrl, aiHeaders);
       learnPromise.catch((e) => console.error("Background learning failed:", e));
+      const runtime = (globalThis as any).EdgeRuntime;
+      if (runtime?.waitUntil) {
+        runtime.waitUntil(learnPromise);
+      }
     }
 
     return new Response(responseBody, {
