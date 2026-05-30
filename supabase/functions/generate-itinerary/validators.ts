@@ -21,6 +21,30 @@ export function isValidTargetedAdjustResponse(data: unknown): boolean {
   return Array.isArray(items) && items.length > 0;
 }
 
+export function formatAdjustResponse(
+  mode: "targeted",
+  data: Record<string, unknown>,
+  targetDayNumber: number
+): { adjustedDay: unknown; hotel: unknown };
+export function formatAdjustResponse(
+  mode: "whole",
+  data: Record<string, unknown>
+): { days: unknown; hotel: unknown };
+export function formatAdjustResponse(
+  mode: "targeted" | "whole",
+  data: Record<string, unknown>,
+  targetDayNumber?: number
+): { adjustedDay?: unknown; days?: unknown; hotel: unknown } {
+  const hotel = data.hotel ?? null;
+  if (mode === "targeted") {
+    const days = data.days as Array<Record<string, unknown>>;
+    const adjustedDay = days.find((d) => d.day === targetDayNumber) ?? days[0];
+    adjustedDay.day = targetDayNumber;
+    return { adjustedDay, hotel };
+  }
+  return { days: data.days, hotel };
+}
+
 export function isValidHotel(hotel: unknown): boolean {
   if (!hotel || typeof hotel !== "object") return false;
   const h = hotel as Record<string, unknown>;

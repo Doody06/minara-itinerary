@@ -3,8 +3,10 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { sanitizeStrings, sanitizeItinerary, sanitizeHotel } from "./sanitizers.ts";
 import {
   isValidFullResponse,
+  isValidWholeAdjustResponse,
   isValidTargetedAdjustResponse,
   isValidHotel,
+  formatAdjustResponse,
 } from "./validators.ts";
 
 const corsHeaders = {
@@ -244,7 +246,7 @@ ${targetItemId && targetItemTitle ? `Only modify "${targetItemTitle}" (id: ${tar
 Return ONLY Day ${targetDayNumber}. Keep day number as ${targetDayNumber}.`;
       } else {
         userPrompt += `\n\nDETAILED ADJUSTMENT: "${instruction}"
-Apply across entire itinerary.`;
+Apply across entire itinerary. Return ALL days in the days array.`;
       }
     }
 
@@ -314,6 +316,8 @@ Apply across entire itinerary.`;
     // Choose validator based on request mode
     const validate = isDetailedAdjust && detailedAdjustDayNumber
       ? isValidTargetedAdjustResponse
+      : isDetailedAdjust
+      ? isValidWholeAdjustResponse
       : isValidFullResponse;
 
     // Call AI with retry - use fast model for speed
@@ -364,12 +368,12 @@ Apply across entire itinerary.`;
       }
     }
 
-    // For detailed adjust targeting a single day, return immediately
-    if (isDetailedAdjust && detailedAdjustDayNumber) {
-      const days = itineraryData.days as Array<Record<string, unknown>>;
-      const adjustedDay = days.find((d) => d.day === detailedAdjustDayNumber) ?? days[0];
-      adjustedDay.day = detailedAdjustDayNumber;
-      return new Response(JSON.stringify({ adjustedDay, hotel: itineraryData.hotel ?? null }), {
+    // For detailed adjust (targeted or whole), return explicit contract shape
+    if (isDetailedAdjust) {
+      const body = detailedAdjustDayNumber
+        ? formatAdjustResponse("targeted", itineraryData, detailedAdjustDayNumber)
+        : formatAdjustResponse("whole", itineraryData);
+      return new Response(JSON.stringify(body), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
