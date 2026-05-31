@@ -1,25 +1,7 @@
 import React from "react";
 import { MapPin } from "lucide-react";
-import { fetchPrayerTimes } from "@/lib/utils";
-
-// Geocode a destination name to coordinates using OpenStreetMap Nominatim (free, no API key)
-async function geocodeDestination(destination: string): Promise<{ latitude: number; longitude: number } | null> {
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=1`,
-      { headers: { "User-Agent": "HalalTravelApp/1.0" } }
-    );
-    if (!response.ok) return null;
-    const results = await response.json();
-    if (results.length === 0) return null;
-    return {
-      latitude: parseFloat(results[0].lat),
-      longitude: parseFloat(results[0].lon),
-    };
-  } catch {
-    return null;
-  }
-}
+import { fetchPrayerTimes, buildPrayerCacheKey } from "@/lib/utils";
+import { destinationMetadata } from "@/data/dummyData";
 
 export function PrayerTimesSidebar({ destination, date, label }: { destination?: string; date?: string; label?: string }) {
   const [prayerTimes, setPrayerTimes] = React.useState<Record<string, string> | null>(null);
@@ -30,7 +12,6 @@ export function PrayerTimesSidebar({ destination, date, label }: { destination?:
     if (!destination) return;
     let cancelled = false;
 
-    // Use today if date is missing or invalid
     let useDate = date;
     if (!useDate || !/^\d{4}-\d{2}-\d{2}$/.test(useDate)) {
       useDate = new Date().toISOString().slice(0, 10);
@@ -38,21 +19,36 @@ export function PrayerTimesSidebar({ destination, date, label }: { destination?:
 
     setLoading(true);
     setError(null);
+    setPrayerTimes(null);
+
+    const meta = destinationMetadata.find(m => m.value === destination);
+    if (!meta) {
+      setError("Prayer times unavailable for this destination.");
+      setLoading(false);
+      return;
+    }
+
+    const cacheKey = buildPrayerCacheKey(destination, useDate, meta.prayerMethod);
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      setPrayerTimes(JSON.parse(cached));
+      setLoading(false);
+      return;
+    }
 
     (async () => {
-      const coords = await geocodeDestination(destination);
+      const times = await fetchPrayerTimes({
+        latitude: meta.latitude,
+        longitude: meta.longitude,
+        date: useDate,
+        method: meta.prayerMethod,
+      });
       if (cancelled) return;
-      if (!coords) {
-        setError("Could not find location for this destination");
-        setLoading(false);
-        return;
-      }
-      const times = await fetchPrayerTimes({ ...coords, date: useDate });
-      if (cancelled) return;
-      if (!times) {
-        setError("Could not fetch prayer times");
-      } else {
+      if (times) {
+        localStorage.setItem(cacheKey, JSON.stringify(times));
         setPrayerTimes(times);
+      } else {
+        setError("Could not fetch prayer times");
       }
       setLoading(false);
     })();
