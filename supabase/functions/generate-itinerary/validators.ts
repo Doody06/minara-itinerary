@@ -11,15 +11,7 @@ function hasValidDays(data: unknown): boolean {
 
 export const isValidFullResponse = hasValidDays;
 export const isValidWholeAdjustResponse = hasValidDays;
-
-export function isValidTargetedAdjustResponse(data: unknown): boolean {
-  if (!data || typeof data !== "object") return false;
-  const record = data as Record<string, unknown>;
-  const adjustedDay = record.adjustedDay;
-  if (!adjustedDay || typeof adjustedDay !== "object") return false;
-  const items = (adjustedDay as Record<string, unknown>).items;
-  return Array.isArray(items) && items.length > 0;
-}
+export const isValidTargetedAdjustResponse = hasValidDays;
 
 export function formatAdjustResponse(
   mode: "targeted",

@@ -73,15 +73,15 @@ describe("isValidWholeAdjustResponse", () => {
 });
 
 describe("isValidTargetedAdjustResponse", () => {
-  it("passes for a valid targeted adjust response", () => {
+  it("passes for a valid targeted adjust response (days array shape)", () => {
     expect(isValidTargetedAdjustResponse(validTargetedAdjustResponse)).toBe(true);
   });
 
-  it("fails when adjustedDay is missing", () => {
+  it("fails when days is missing", () => {
     expect(isValidTargetedAdjustResponse(missingAdjustedDayResponse)).toBe(false);
   });
 
-  it("fails when adjustedDay.items is empty", () => {
+  it("fails when the day has an empty items array", () => {
     expect(isValidTargetedAdjustResponse(adjustedDayEmptyItemsResponse)).toBe(false);
   });
 
