@@ -22,6 +22,14 @@ export interface DayPlan {
   items: ItineraryItem[];
 }
 
+export const destinationMetadata = [
+  { value: "istanbul",     label: "Istanbul, Turkey",       latitude: 41.0082, longitude: 28.9784,  prayerMethod: 13 },
+  { value: "dubai",        label: "Dubai, UAE",             latitude: 25.2048, longitude: 55.2708,  prayerMethod: 8  },
+  { value: "kuala-lumpur", label: "Kuala Lumpur, Malaysia", latitude: 3.1390,  longitude: 101.6869, prayerMethod: 11 },
+  { value: "london",       label: "London, UK",             latitude: 51.5074, longitude: -0.1278,  prayerMethod: 3  },
+  { value: "tokyo",        label: "Tokyo, Japan",           latitude: 35.6762, longitude: 139.6503, prayerMethod: 3  },
+];
+
 export const destinations = [
   { value: "istanbul", label: "Istanbul, Turkey", country: "Turkey" },
   { value: "kuala-lumpur", label: "Kuala Lumpur, Malaysia", country: "Malaysia" },

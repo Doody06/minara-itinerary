@@ -1,10 +1,29 @@
-// Fetch prayer times from Aladhan API
-// location: { latitude: number, longitude: number }, date: YYYY-MM-DD string
-export async function fetchPrayerTimes({ latitude, longitude, date }) {
-  // Aladhan API expects date as DD-MM-YYYY
+export function buildPrayerTimesUrl(
+  latitude: number,
+  longitude: number,
+  date: string,
+  method: number = 2
+): string {
   const [year, month, day] = date.split("-");
-  const formattedDate = `${day}-${month}-${year}`;
-  const url = `https://api.aladhan.com/v1/timings/${formattedDate}?latitude=${latitude}&longitude=${longitude}&method=2`;
+  return `https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=${latitude}&longitude=${longitude}&method=${method}`;
+}
+
+export function buildPrayerCacheKey(dest: string, date: string, method: number): string {
+  return `prayer_${dest}_${date}_${method}`;
+}
+
+export async function fetchPrayerTimes({
+  latitude,
+  longitude,
+  date,
+  method = 2,
+}: {
+  latitude: number;
+  longitude: number;
+  date: string;
+  method?: number;
+}) {
+  const url = buildPrayerTimesUrl(latitude, longitude, date, method);
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch prayer times");

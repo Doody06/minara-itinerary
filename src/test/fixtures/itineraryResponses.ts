@@ -108,12 +108,9 @@ export const validFullResponseNoHotel = {
   hotel: null,
 };
 
-/** Valid targeted detailed-adjust response (single day). */
+/** Valid targeted detailed-adjust response (single day in days array — actual AI shape). */
 export const validTargetedAdjustResponse = {
-  adjustedDay: {
-    ...validDay1,
-    title: "Sultanahmet — Updated",
-  } as DayPlan,
+  days: [{ ...validDay1, title: "Sultanahmet — Updated" }] as DayPlan[],
   hotel: null,
 };
 
@@ -153,14 +150,14 @@ export const dayWithNoItemsResponse = {
   hotel: validHotel,
 };
 
-/** adjustedDay is missing from a targeted adjust response. */
+/** days is missing from a targeted adjust response. */
 export const missingAdjustedDayResponse = {
   hotel: validHotel,
 };
 
-/** adjustedDay has an empty items array. */
+/** targeted adjust response where the day has an empty items array. */
 export const adjustedDayEmptyItemsResponse = {
-  adjustedDay: { day: 1, title: "Day 1", items: [] } as DayPlan,
+  days: [{ day: 1, title: "Day 1", items: [] }] as DayPlan[],
   hotel: validHotel,
 };
 

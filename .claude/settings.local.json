@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:whatvever.com)",
+      "mcp__task-master-ai__parse_prd",
+      "Bash(find:*)",
+      "mcp__task-master-ai__update_task",
+      "mcp__task-master-ai__get_task",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(npx eslint:*)"
+    ],
+    "deny": []
+  }
+}
