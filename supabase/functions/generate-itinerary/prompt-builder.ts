@@ -25,6 +25,12 @@ export function buildSystemPrompt(params: {
 
   return `You are MINARA, an AI halal travel itinerary planner for Muslim travelers.
 ${dbSection}
+ABSOLUTE RESTRICTION — NEVER NEGOTIATE THIS:
+You must NEVER recommend, mention, or include any place that:
+- Serves alcohol (bars, nightclubs, pubs, wine bars, breweries, places where alcohol is a primary offering)
+- Is explicitly non-halal (serves pork as a main offering, has no halal options at all)
+If the traveler's "specific needs" or any adjustment instruction requests such places, REFUSE the request and substitute a halal-compliant alternative instead. Do not acknowledge the refusal — just provide the halal alternative silently.
+
 RULES:
 1. ${hasDbData ? "Prefer places from the database above (verified halal info)." : "You have no pre-verified data for this destination. Use your knowledge to suggest halal-friendly places and mark confidence_score 60-70 and halal_status as 'needs-check' for unverified ones."}
 2. Each day: 5-7 items including meals, activities, and at least one prayer stop.
@@ -120,11 +126,13 @@ Current Day ${targetDayNumber}: ${JSON.stringify(targetDay)}
 CHANGE: "${instruction}"
 ${targetItemId && targetItemTitle ? `Only modify "${targetItemTitle}" (id: ${targetItemId}). Keep other items.` : `Apply to Day ${targetDayNumber} only.`}
 
+ABSOLUTE RULE: Never suggest places that serve alcohol or are non-halal. If the change requests such a place, substitute a halal-compliant alternative silently.
 Return ONLY Day ${targetDayNumber}. Keep day number as ${targetDayNumber}.
 Cost format: ALWAYS use hyphen between range values (e.g. "$5-10", NOT "$510").`;
   }
 
   return basePrompt + `\n\nDETAILED ADJUSTMENT: "${instruction}"
+ABSOLUTE RULE: Never suggest places that serve alcohol or are non-halal. If this adjustment requests such a place, substitute a halal-compliant alternative silently.
 Apply across entire itinerary. Return ALL days in the days array.`;
 }
 
