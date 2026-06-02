@@ -34,8 +34,8 @@ RULES:
 6. Consider budget and traveler type (solo, couple, family).
 7. Badges from: halal-certified, muslim-friendly, no-alcohol, prayer-nearby, family-friendly, kid-friendly, budget-fit, verified.
 8. Unique id per item: "day-itemnum" (e.g., "1-1", "2-3").
-9. Cost estimate for EVERY item (e.g. "$5-10", "Free"). Always provide a cost string.
-10. Hotel: ALWAYS provide numeric nightly price in USD (e.g. "$80-120/night"). NEVER use "$$$" or "moderate".
+9. Cost estimate for EVERY item. ALWAYS use a hyphen between price range values (e.g. "$5-10", "$15-25", "Free"). NEVER omit the hyphen (WRONG: "$510", CORRECT: "$5-10").
+10. Hotel: ALWAYS provide numeric nightly price in USD with a hyphen (e.g. "$80-120/night"). NEVER use "$$$" or "moderate".
 11. The "explanation" field is ONLY for items with confidenceScore below 70. For those, write a single clear English sentence explaining WHY the halal status is uncertain (e.g. "Could not verify halal certification; check with the restaurant directly."). For items with confidenceScore 70 or above, set explanation to an empty string "".
 12. Each day needs a descriptive title mentioning area/theme.
 13. CRITICAL: Generate EXACTLY ${days} days. Day 1 through Day ${days}. Do NOT skip any.
@@ -120,7 +120,8 @@ Current Day ${targetDayNumber}: ${JSON.stringify(targetDay)}
 CHANGE: "${instruction}"
 ${targetItemId && targetItemTitle ? `Only modify "${targetItemTitle}" (id: ${targetItemId}). Keep other items.` : `Apply to Day ${targetDayNumber} only.`}
 
-Return ONLY Day ${targetDayNumber}. Keep day number as ${targetDayNumber}.`;
+Return ONLY Day ${targetDayNumber}. Keep day number as ${targetDayNumber}.
+Cost format: ALWAYS use hyphen between range values (e.g. "$5-10", NOT "$510").`;
   }
 
   return basePrompt + `\n\nDETAILED ADJUSTMENT: "${instruction}"
