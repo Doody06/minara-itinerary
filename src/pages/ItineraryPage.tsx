@@ -114,14 +114,14 @@ function ItemCard({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <div>
+            <div className="min-w-0">
               <span className="text-xs font-medium text-muted-foreground">{item.time}</span>
               <h4 className="font-display font-semibold text-base group-hover:text-primary transition-colors">
                 {item.title}
               </h4>
             </div>
             {item.cost && (
-              <span className="text-sm font-medium text-gold shrink-0">{item.cost}</span>
+              <span className="text-sm font-medium text-gold shrink-0 whitespace-nowrap">{item.cost}</span>
             )}
           </div>
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
